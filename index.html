@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Dash - 虛擬儀表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        .lcd-font { font-family: 'Orbitron', sans-serif; }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col overflow-hidden">
+
+    <div id="guide-page" class="fixed inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center p-6 text-center">
+        <div class="mb-8">
+            <div class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold mb-2">智慧飛輪引導</h1>
+            <p class="text-slate-400">點擊下方按鈕開始同步您的運動數據</p>
+        </div>
+        <button onclick="startApp()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-12 rounded-full text-xl transition-all active:scale-95 shadow-lg shadow-blue-500/50">
+            開始運動
+        </button>
+    </div>
+
+    <div id="main-app" class="hidden flex-col h-screen">
+        
+        <div class="relative flex-1 bg-black flex flex-col">
+            <div id="video-placeholder" class="flex-1 flex items-center justify-center">
+                <div class="text-center p-4">
+                    <div id="video-status" class="text-slate-500 mb-2 italic">影片準備中...</div>
+                    <div class="aspect-video w-full max-w-md bg-slate-800 rounded-lg flex items-center justify-center">
+                         <span class="text-sm">模擬影片播放區域</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-8">
+                <button onclick="controlVideo('back')" class="p-3 bg-white/20 rounded-full hover:bg-white/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
+                    </svg>
+                </button>
+                <button id="play-btn" onclick="controlVideo('play')" class="p-3 bg-blue-500 rounded-full hover:bg-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="h-2/5 glass-morphism p-6 rounded-t-3xl border-t border-white/20">
+            <div class="grid grid-cols-3 gap-4 h-full">
+                <div class="flex flex-col items-center justify-center border-r border-white/10">
+                    <span class="text-slate-400 text-xs uppercase tracking-widest">Duration</span>
+                    <span id="stat-time" class="text-3xl font-bold lcd-font text-blue-400">00:00</span>
+                </div>
+                <div class="flex flex-col items-center justify-center border-r border-white/10">
+                    <span class="text-slate-400 text-xs uppercase tracking-widest">Resistance</span>
+                    <div class="flex items-baseline">
+                        <span id="stat-resistance" class="text-4xl font-bold lcd-font">12</span>
+                        <span class="text-xs ml-1 text-slate-500">LV</span>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center justify-center">
+                    <span class="text-slate-400 text-xs uppercase tracking-widest">Calories</span>
+                    <div class="flex items-baseline">
+                        <span id="stat-calories" class="text-3xl font-bold lcd-font text-orange-500">0</span>
+                        <span class="text-xs ml-1 text-slate-500">kcal</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timer = 0;
+        let isRunning = false;
+        let interval;
+
+        function startApp() {
+            document.getElementById('guide-page').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('flex');
+            startWorkout();
+        }
+
+        function startWorkout() {
+            if (!isRunning) {
+                isRunning = true;
+                interval = setInterval(() => {
+                    timer++;
+                    updateStats();
+                }, 1000);
+            }
+        }
+
+        function updateStats() {
+            // 更新時間
+            const mins = Math.floor(timer / 60).toString().padStart(2, '0');
+            const secs = (timer % 60).toString().padStart(2, '0');
+            document.getElementById('stat-time').innerText = `${mins}:${secs}`;
+
+            // 模擬卡路里 (隨時間增加)
+            const cal = Math.floor(timer * 0.15);
+            document.getElementById('stat-calories').innerText = cal;
+            
+            // 隨機模擬阻力波動 (10-15之間)
+            if (timer % 5 === 0) {
+                const res = 10 + Math.floor(Math.random() * 6);
+                document.getElementById('stat-resistance').innerText = res;
+            }
+        }
+
+        function controlVideo(action) {
+            const status = document.getElementById('video-status');
+            const playBtn = document.getElementById('play-btn');
+            
+            if (action === 'play') {
+                status.innerText = "正在播放健身課程...";
+                playBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+                playBtn.onclick = () => controlVideo('pause');
+            } else if (action === 'pause') {
+                status.innerText = "已暫停";
+                playBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>`;
+                playBtn.onclick = () => controlVideo('play');
+            } else if (action === 'back') {
+                alert('回到課程選擇清單');
+            }
+        }
+    </script>
+</body>
+</html>
