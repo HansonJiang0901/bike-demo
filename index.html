@@ -2,141 +2,116 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitness Dash - 虛擬儀表</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Fitness Cloud Streaming</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-        .lcd-font { font-family: 'Orbitron', sans-serif; }
-        .glass-morphism {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr) 60px;
+            height: 100px;
         }
+        /* 影片選單：側滑式設計，不干擾儀表 */
+        #library-overlay {
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        #library-overlay.active { transform: translateX(0); }
     </style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen flex flex-col overflow-hidden">
+<body class="bg-black text-white h-screen overflow-hidden flex flex-col">
 
-    <div id="guide-page" class="fixed inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center p-6 text-center">
-        <div class="mb-8">
-            <div class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+    <div class="relative flex-grow bg-slate-950 flex items-center justify-center">
+        <video id="player" class="w-full h-full object-contain" playsinline>
+            <source src="" type="video/mp4">
+        </video>
+
+        <div id="library-overlay" class="absolute inset-y-0 right-0 w-64 bg-slate-900/95 shadow-2xl p-4 z-40 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold">雲端課程庫</h3>
+                <button onclick="toggleLib()" class="text-slate-400">關閉</button>
             </div>
-            <h1 class="text-3xl font-bold mb-2">智慧飛輪引導</h1>
-            <p class="text-slate-400">點擊下方按鈕開始同步您的運動數據</p>
+            <div id="cloud-playlist" class="space-y-4">
+                <p class="text-xs text-slate-500">正在同步雲端清單...</p>
+            </div>
         </div>
-        <button onclick="startApp()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-12 rounded-full text-xl transition-all active:scale-95 shadow-lg shadow-blue-500/50">
-            開始運動
+        
+        <button onclick="toggleLib()" class="absolute top-4 right-4 bg-blue-600 p-2 rounded-full shadow-lg">
+            選課
         </button>
     </div>
 
-    <div id="main-app" class="hidden flex-col h-screen">
-        
-        <div class="relative flex-1 bg-black flex flex-col">
-            <div id="video-placeholder" class="flex-1 flex items-center justify-center">
-                <div class="text-center p-4">
-                    <div id="video-status" class="text-slate-500 mb-2 italic">影片準備中...</div>
-                    <div class="aspect-video w-full max-w-md bg-slate-800 rounded-lg flex items-center justify-center">
-                         <span class="text-sm">模擬影片播放區域</span>
-                    </div>
-                </div>
+    <div class="dashboard-fixed bg-slate-900 border-t border-blue-500/30">
+        <div class="dashboard-grid items-center text-center">
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500">TIME</span>
+                <span id="v-time" class="text-xl font-mono text-blue-400">00:00</span>
             </div>
-
-            <div class="absolute bottom-4 left-0 right-0 flex justify-center space-x-8">
-                <button onclick="controlVideo('back')" class="p-3 bg-white/20 rounded-full hover:bg-white/30">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
-                    </svg>
-                </button>
-                <button id="play-btn" onclick="controlVideo('play')" class="p-3 bg-blue-500 rounded-full hover:bg-blue-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                    </svg>
-                </button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500">RESIST</span>
+                <span id="v-res" class="text-xl font-mono text-white">10</span>
             </div>
-        </div>
-
-        <div class="h-2/5 glass-morphism p-6 rounded-t-3xl border-t border-white/20">
-            <div class="grid grid-cols-3 gap-4 h-full">
-                <div class="flex flex-col items-center justify-center border-r border-white/10">
-                    <span class="text-slate-400 text-xs uppercase tracking-widest">Duration</span>
-                    <span id="stat-time" class="text-3xl font-bold lcd-font text-blue-400">00:00</span>
-                </div>
-                <div class="flex flex-col items-center justify-center border-r border-white/10">
-                    <span class="text-slate-400 text-xs uppercase tracking-widest">Resistance</span>
-                    <div class="flex items-baseline">
-                        <span id="stat-resistance" class="text-4xl font-bold lcd-font">12</span>
-                        <span class="text-xs ml-1 text-slate-500">LV</span>
-                    </div>
-                </div>
-                <div class="flex flex-col items-center justify-center">
-                    <span class="text-slate-400 text-xs uppercase tracking-widest">Calories</span>
-                    <div class="flex items-baseline">
-                        <span id="stat-calories" class="text-3xl font-bold lcd-font text-orange-500">0</span>
-                        <span class="text-xs ml-1 text-slate-500">kcal</span>
-                    </div>
-                </div>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500">KCAL</span>
+                <span id="v-cal" class="text-xl font-mono text-orange-500">0</span>
             </div>
+            <button onclick="requestFS()" class="flex items-center justify-center text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            </button>
         </div>
     </div>
 
     <script>
-        let timer = 0;
-        let isRunning = false;
-        let interval;
+        const player = document.getElementById('player');
+        const overlay = document.getElementById('library-overlay');
 
-        function startApp() {
-            document.getElementById('guide-page').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            document.getElementById('main-app').classList.add('flex');
-            startWorkout();
+        // 模擬從雲端獲取的 API 數據
+        const mockCloudData = [
+            { title: "法蘭克福林間小徑", url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", kcal: 300 },
+            { title: "巴黎城市巡禮", url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", kcal: 450 }
+        ];
+
+        function renderCloudPlaylist() {
+            const container = document.getElementById('cloud-playlist');
+            container.innerHTML = mockCloudData.map(v => `
+                <div onclick="playVideo('${v.url}')" class="bg-white/5 p-3 rounded-lg border border-white/10 hover:border-blue-500 transition cursor-pointer">
+                    <div class="text-sm font-medium">${v.title}</div>
+                    <div class="text-xs text-slate-500 mt-1">預估消耗: ${v.kcal} kcal</div>
+                </div>
+            `).join('');
         }
 
-        function startWorkout() {
-            if (!isRunning) {
-                isRunning = true;
-                interval = setInterval(() => {
-                    timer++;
-                    updateStats();
-                }, 1000);
+        function playVideo(url) {
+            player.src = url;
+            player.play();
+            toggleLib();
+        }
+
+        function toggleLib() {
+            overlay.classList.toggle('active');
+        }
+
+        function requestFS() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
             }
         }
 
-        function updateStats() {
-            // 更新時間
-            const mins = Math.floor(timer / 60).toString().padStart(2, '0');
-            const secs = (timer % 60).toString().padStart(2, '0');
-            document.getElementById('stat-time').innerText = `${mins}:${secs}`;
-
-            // 模擬卡路里 (隨時間增加)
-            const cal = Math.floor(timer * 0.15);
-            document.getElementById('stat-calories').innerText = cal;
-            
-            // 隨機模擬阻力波動 (10-15之間)
-            if (timer % 5 === 0) {
-                const res = 10 + Math.floor(Math.random() * 6);
-                document.getElementById('stat-resistance').innerText = res;
+        // 初始化
+        renderCloudPlaylist();
+        
+        // 模擬數據更新
+        let seconds = 0;
+        setInterval(() => {
+            if(!player.paused) {
+                seconds++;
+                document.getElementById('v-time').innerText = 
+                    new Date(seconds * 1000).toISOString().substr(14, 5);
+                document.getElementById('v-cal').innerText = Math.floor(seconds * 0.25);
             }
-        }
-
-        function controlVideo(action) {
-            const status = document.getElementById('video-status');
-            const playBtn = document.getElementById('play-btn');
-            
-            if (action === 'play') {
-                status.innerText = "正在播放健身課程...";
-                playBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
-                playBtn.onclick = () => controlVideo('pause');
-            } else if (action === 'pause') {
-                status.innerText = "已暫停";
-                playBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>`;
-                playBtn.onclick = () => controlVideo('play');
-            } else if (action === 'back') {
-                alert('回到課程選擇清單');
-            }
-        }
+        }, 1000);
     </script>
 </body>
 </html>
