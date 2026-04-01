@@ -1,117 +1,1230 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Fitness Cloud Streaming</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr) 60px;
-            height: 100px;
-        }
-        /* 影片選單：側滑式設計，不干擾儀表 */
-        #library-overlay {
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-        }
-        #library-overlay.active { transform: translateX(0); }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>FitWheel</title>
+  <!-- QR Code library for Wi-Fi auto-connect QR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:   #4fc3f7;
+      --red:    #f78166;
+      --green:  #56d364;
+      --orange: #ffa657;
+      --purple: #d2a8ff;
+      --bg:     #0a0c10;
+      --card:   #161b22;
+      --border: #30363d;
+      --muted:  #8b949e;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ════════════════════════════════════════════
+       SCREEN SYSTEM
+    ════════════════════════════════════════════ */
+    .screen {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .screen.hidden {
+      display: none !important;
+    }
+
+    /* ════════════════════════════════════════════
+       SHARED LOGIN SCREENS
+    ════════════════════════════════════════════ */
+    .login-screen {
+      padding: 20px;
+      background: radial-gradient(ellipse at top, #2a0000 0%, #0a0000 70%);
+      overflow-y: auto;
+      justify-content: flex-start;
+      padding-top: 40px;
+    }
+
+    .login-header { text-align: center; margin-bottom: 24px; }
+    .login-icon { font-size: 52px; margin-bottom: 8px; display: block; }
+    .login-title { font-size: 26px; font-weight: 700; letter-spacing: -.3px; color: #ff6b6b; }
+    .login-sub { font-size: 14px; color: #a06060; margin-top: 4px; }
+
+    /* Progress indicator */
+    .progress-dots {
+      display: flex; justify-content: center; gap: 10px;
+      margin-bottom: 24px;
+    }
+    .pdot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #4a1010;
+      transition: background .3s, box-shadow .3s;
+    }
+    .pdot.active { background: #ff4444; box-shadow: 0 0 8px #ff4444; }
+    .pdot.done   { background: #8b1a1a; }
+
+    /* QR code card */
+    .qr-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px;
+      width: fit-content;
+      margin: 0 auto 6px;
+      box-shadow: 0 0 40px rgba(255,68,68,.2);
+    }
+    .qr-hint {
+      text-align: center;
+      font-size: 11px;
+      color: #a06060;
+    }
+
+    /* Network info card */
+    .net-card {
+      width: 100%; max-width: 340px;
+      background: #1a0505;
+      border: 1px solid #8b1a1a;
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin: 0 auto 20px;
+    }
+    .net-name {
+      font-size: 17px; font-weight: 600; color: #ff6b6b;
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 12px;
+    }
+    .net-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #3a1010;
+      font-size: 14px;
+    }
+    .net-row:last-child { border: none; }
+    .net-row span:first-child { color: #a06060; }
+    .net-row span:last-child { font-weight: 500; font-family: monospace; letter-spacing: .5px; color: #ffaaaa; }
+
+    /* Steps */
+    .steps {
+      width: 100%; max-width: 340px;
+      margin: 0 auto 24px;
+    }
+    .step {
+      display: flex; gap: 12px; align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .step-num {
+      background: #c0392b; color: #fff;
+      min-width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px;
+    }
+    .step-text { color: #ccc; font-size: 14px; line-height: 1.5; padding-top: 3px; }
+    .step-text strong { color: #ff6b6b; }
+
+    /* Primary action button */
+    .btn-primary {
+      display: block;
+      background: linear-gradient(135deg, #c0392b, #8b1a1a);
+      color: #fff;
+      border: none; border-radius: 50px;
+      padding: 15px 40px;
+      font-size: 17px; font-weight: 700;
+      cursor: pointer; margin: 0 auto 16px;
+      box-shadow: 0 4px 24px rgba(192,57,43,.5);
+      transition: transform .15s, box-shadow .15s;
+      letter-spacing: .5px;
+    }
+    .btn-primary:active { transform: scale(.96); }
+    .btn-primary:disabled { opacity: .4; pointer-events: none; }
+
+    /* Connecting spinner */
+    .connecting {
+      display: none; align-items: center; justify-content: center;
+      gap: 10px; color: #ff6b6b; font-size: 15px;
+      margin-bottom: 16px;
+    }
+    .spinner {
+      width: 22px; height: 22px;
+      border: 3px solid rgba(255,68,68,.25);
+      border-top-color: #ff4444;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ════════════════════════════════════════════
+       SCREEN 2 — TERMS & LOGIN
+    ════════════════════════════════════════════ */
+    .terms-card {
+      width: 100%; max-width: 360px;
+      background: #1a0505;
+      border: 1px solid #8b1a1a;
+      border-radius: 16px;
+      padding: 20px;
+      margin: 0 auto 20px;
+    }
+    .terms-card h3 {
+      font-size: 15px; color: #ff6b6b;
+      margin-bottom: 12px;
+    }
+    .terms-text {
+      font-size: 12px; color: #bbb;
+      line-height: 1.7;
+      max-height: 150px;
+      overflow-y: auto;
+      padding-right: 6px;
+      margin-bottom: 16px;
+    }
+    .terms-text::-webkit-scrollbar { width: 4px; }
+    .terms-text::-webkit-scrollbar-thumb { background: #8b1a1a; border-radius: 2px; }
+    .checkbox-row {
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer; font-size: 14px; color: #ccc;
+    }
+    .checkbox-row input[type="checkbox"] {
+      width: 20px; height: 20px;
+      accent-color: #c0392b;
+      cursor: pointer;
+    }
+
+    /* User info form */
+    .login-form {
+      width: 100%; max-width: 360px;
+      margin: 0 auto 20px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-label {
+      font-size: 12px; color: #a06060;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .form-input {
+      background: #1a0505;
+      border: 1px solid #8b1a1a;
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #fff; font-size: 15px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .form-input:focus { border-color: #ff4444; }
+    .form-input::placeholder { color: #5a3030; }
+    .form-select {
+      background: #1a0505;
+      border: 1px solid #8b1a1a;
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #fff; font-size: 15px;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ff6b6b' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+
+    /* ════════════════════════════════════════════
+       FITNESS SCREEN
+    ════════════════════════════════════════════ */
+    #screen-fitness {
+      padding: 0;
+      justify-content: flex-start;
+      background: #000;
+    }
+
+    /* ── Video selector strip ── */
+    #vid-selector {
+      flex-shrink: 0;
+      display: flex; gap: 8px;
+      overflow-x: auto; scrollbar-width: none;
+      background: #111;
+      padding: 8px 10px;
+      touch-action: pan-x;
+    }
+    #vid-selector::-webkit-scrollbar { display: none; }
+
+    .vid-thumb {
+      flex-shrink: 0;
+      background: #1c1c1c;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color .2s, background .2s;
+      min-width: 90px;
+    }
+    .vid-thumb.active { border-color: var(--blue); background: #0d2035; }
+    .vid-thumb-icon { font-size: 18px; }
+    .vid-thumb-title {
+      font-size: 10px; color: #bbb;
+      margin-top: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 80px;
+    }
+
+    /* Custom URL row */
+    .custom-url-row {
+      background: #111;
+      padding: 0 10px 8px;
+      display: flex; gap: 6px; flex-shrink: 0;
+    }
+    .url-input {
+      flex: 1;
+      background: #1c1c1c; border: 1px solid var(--border);
+      border-radius: 8px; color: #fff;
+      padding: 7px 10px; font-size: 13px;
+      outline: none;
+    }
+    .url-input::placeholder { color: var(--muted); }
+    .url-input:focus { border-color: var(--blue); }
+    .btn-load {
+      background: var(--blue); color: #000;
+      border: none; border-radius: 8px;
+      padding: 7px 14px; font-size: 13px; font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ── YouTube player ── */
+    #player-wrap {
+      flex: 1; position: relative; background: #000;
+      min-height: 0; /* important for flex shrink */
+      width: 100%; align-self: stretch;
+    }
+    #yt-player,
+    #player-wrap iframe {
+      position: absolute; inset: 0;
+      width: 100% !important; height: 100% !important;
+    }
+
+    /* ── Control overlay ── */
+    #ctrl-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,.85));
+      padding: 30px 14px 10px;
+      display: flex; align-items: center; gap: 12px;
+      transition: opacity .3s;
+    }
+
+    .ctrl-btn {
+      background: rgba(255,255,255,.18);
+      border: none; border-radius: 50%;
+      color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s, transform .1s;
+      backdrop-filter: blur(4px);
+    }
+    .ctrl-btn:active { transform: scale(.88); }
+    .ctrl-btn.sm { width: 44px; height: 44px; font-size: 18px; }
+    .ctrl-btn.lg {
+      width: 54px; height: 54px; font-size: 22px;
+      background: rgba(79,195,247,.8);
+    }
+    .ctrl-btn.lg:hover { background: rgba(79,195,247,.95); }
+
+    .vol-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 4px; border-radius: 2px;
+      background: rgba(255,255,255,.3); outline: none;
+      cursor: pointer;
+    }
+    .vol-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 15px; height: 15px;
+      border-radius: 50%; background: var(--blue); cursor: pointer;
+    }
+    .time-display { font-size: 12px; color: #ccc; white-space: nowrap; min-width: 40px; }
+
+    /* ── Data Bar ── */
+    #data-bar {
+      flex-shrink: 0;
+      width: 100%; align-self: stretch;
+      background: linear-gradient(180deg, #1a0000 0%, #2a0a0a 100%);
+      border-top: 2px solid #c0392b;
+      box-shadow: 0 -4px 20px rgba(192,57,43,.35);
+      display: flex; align-items: center;
+      justify-content: space-around;
+      padding: 12px 0;
+      padding-bottom: max(14px, env(safe-area-inset-bottom));
+    }
+
+    .metric {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 3px;
+      flex: 1;
+    }
+    .metric-val {
+      font-size: 30px; font-weight: 800;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 12px currentColor;
+    }
+    .metric-unit { font-size: 11px; color: #e88; }
+    .metric-lbl {
+      font-size: 9px; text-transform: uppercase;
+      letter-spacing: 1.5px; color: #a06060;
+    }
+
+    /* color per metric — all red tones */
+    .m-time .metric-val       { color: #ff6b6b; }
+    .m-resistance .metric-val { color: #ff2222; }
+    .m-cadence .metric-val    { color: #ff9999; }
+    .m-power .metric-val      { color: #ffcccc; }
+    .m-calories .metric-val   { color: #ff4444; }
+
+    /* Resistance mini-gauge */
+    .res-gauge { display: flex; gap: 2px; margin-top: 2px; }
+    .dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #4a1010;
+      transition: background .3s;
+    }
+    .dot.on { background: #ff2222; box-shadow: 0 0 4px #ff2222; }
+
+    .m-div {
+      width: 1px; height: 42px;
+      background: linear-gradient(180deg, transparent, #8b1a1a, transparent);
+      flex-shrink: 0;
+    }
+
+    /* Workout mode badge */
+    #mode-badge {
+      position: absolute;
+      top: 10px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,.7);
+      border: 1px solid rgba(255,255,255,.15);
+      backdrop-filter: blur(8px);
+      border-radius: 20px;
+      padding: 5px 16px;
+      font-size: 13px; font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity .4s;
+      pointer-events: none;
+    }
+    #mode-badge.show { opacity: 1; }
+
+    /* ════════════════════════════════════════════
+       SETTINGS BUTTON
+    ════════════════════════════════════════════ */
+    #settings-btn, #fullscreen-btn {
+      position: absolute;
+      top: 10px;
+      z-index: 50;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.2);
+      backdrop-filter: blur(8px);
+      border-radius: 50%;
+      width: 38px; height: 38px;
+      font-size: 18px;
+      color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s;
+    }
+    #settings-btn  { right: 12px; }
+    #fullscreen-btn { right: 58px; font-size: 16px; }
+    #settings-btn:active, #fullscreen-btn:active { background: rgba(255,255,255,.15); }
+
+    /* ════════════════════════════════════════════
+       SETTINGS MODAL
+    ════════════════════════════════════════════ */
+    #settings-modal {
+      display: none;
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.65);
+      backdrop-filter: blur(6px);
+      align-items: center; justify-content: center;
+    }
+    #settings-modal.open { display: flex; }
+    .settings-box {
+      background: #1a0505;
+      border: 1px solid #8b1a1a;
+      border-radius: 20px;
+      padding: 28px 24px;
+      width: min(320px, 88vw);
+      box-shadow: 0 8px 40px rgba(192,57,43,.4);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .settings-title {
+      font-size: 16px; font-weight: 700;
+      color: #ff6b6b; text-align: center;
+      margin-bottom: 4px; letter-spacing: 1px;
+    }
+    .settings-action-btn {
+      border: none; border-radius: 12px;
+      padding: 14px;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .settings-action-btn:active { transform: scale(.97); opacity: .85; }
+    .btn-pause  { background: #2a2a00; color: #ffd700; border: 1px solid #665500; }
+    .btn-resume { background: #002a10; color: #56d364; border: 1px solid #1a6632; }
+    .btn-stop   { background: #2a0000; color: #ff4444; border: 1px solid #8b1a1a; }
+    .btn-cancel { background: transparent; color: #888; border: 1px solid #333; }
+
+    /* ════════════════════════════════════════════
+       STATS SCREEN
+    ════════════════════════════════════════════ */
+    #screen-stats {
+      display: none;
+      position: fixed; inset: 0; z-index: 150;
+      background: radial-gradient(ellipse at top, #2a0000 0%, #0a0000 70%);
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    #screen-stats.open { display: flex; }
+    .stats-title {
+      font-size: 22px; font-weight: 800;
+      color: #ff4444; margin-bottom: 6px;
+      letter-spacing: 2px;
+    }
+    .stats-subtitle {
+      font-size: 12px; color: #a06060;
+      margin-bottom: 28px; letter-spacing: 1px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%; max-width: 380px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: #1a0505;
+      border: 1px solid #8b1a1a;
+      border-radius: 14px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+    .stat-val {
+      font-size: 32px; font-weight: 800;
+      color: #ff4444;
+      text-shadow: 0 0 16px rgba(255,68,68,.5);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-unit { font-size: 11px; color: #e88; margin: 2px 0; }
+    .stat-lbl  { font-size: 10px; color: #a06060; text-transform: uppercase; letter-spacing: 1px; }
+    .btn-new-workout {
+      background: linear-gradient(135deg, #c0392b, #8b1a1a);
+      color: #fff; border: none; border-radius: 14px;
+      padding: 16px 40px;
+      font-size: 16px; font-weight: 700;
+      cursor: pointer; letter-spacing: 1px;
+      box-shadow: 0 4px 20px rgba(192,57,43,.5);
+      transition: transform .15s;
+    }
+    .btn-new-workout:active { transform: scale(.96); }
+
+    /* ════════════════════════════════════════════
+       TOAST
+    ════════════════════════════════════════════ */
+    #toast {
+      position: fixed;
+      bottom: 90px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(255,255,255,.12);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,.2);
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 24px;
+      font-size: 14px; font-weight: 500;
+      transition: opacity .3s, transform .3s;
+      opacity: 0; pointer-events: none;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ════════════════════════════════════════════
+       ORIENTATION — LANDSCAPE tweaks
+    ════════════════════════════════════════════ */
+    @media (orientation: landscape) {
+      .login-screen { padding-top: 16px; }
+      #screen-wifi { flex-direction: row; flex-wrap: wrap; gap: 0 24px; align-content: flex-start; }
+      .login-header { width: 100%; margin-bottom: 12px; }
+      .qr-card { margin: 0 auto 4px; }
+      .net-card { max-width: 280px; margin: 0 0 12px; }
+      .steps { max-width: 260px; margin: 0 0 12px; }
+
+      #vid-selector { padding: 6px 8px; }
+      .vid-thumb { min-width: 78px; padding: 6px 10px; }
+      .vid-thumb-icon { font-size: 15px; }
+
+      #data-bar { padding: 7px 0 max(7px,env(safe-area-inset-bottom)); }
+      .metric-val { font-size: 20px; }
+      .metric-lbl { font-size: 8px; }
+      .m-div { height: 30px; }
+
+      .ctrl-btn.sm { width: 38px; height: 38px; font-size: 15px; }
+      .ctrl-btn.lg { width: 46px; height: 46px; font-size: 18px; }
+    }
+
+    /* Very small screen (iPhone SE) */
+    @media (max-width: 380px) {
+      .metric-val { font-size: 22px; }
+    }
+  </style>
 </head>
-<body class="bg-black text-white h-screen overflow-hidden flex flex-col">
+<body>
 
-    <div class="relative flex-grow bg-slate-950 flex items-center justify-center">
-        <video id="player" class="w-full h-full object-contain" playsinline>
-            <source src="" type="video/mp4">
-        </video>
+<!-- ════════════════════════════════════════════
+     SCREEN 1 — Wi-Fi Connection
+════════════════════════════════════════════ -->
+<div class="screen login-screen" id="screen-wifi">
+  <div class="progress-dots">
+    <div class="pdot active"></div>
+    <div class="pdot"></div>
+  </div>
 
-        <div id="library-overlay" class="absolute inset-y-0 right-0 w-64 bg-slate-900/95 shadow-2xl p-4 z-40 overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold">雲端課程庫</h3>
-                <button onclick="toggleLib()" class="text-slate-400">關閉</button>
-            </div>
-            <div id="cloud-playlist" class="space-y-4">
-                <p class="text-xs text-slate-500">正在同步雲端清單...</p>
-            </div>
-        </div>
-        
-        <button onclick="toggleLib()" class="absolute top-4 right-4 bg-blue-600 p-2 rounded-full shadow-lg">
-            選課
-        </button>
+  <div class="login-header">
+    <span class="login-icon">📡</span>
+    <div class="login-title">連接 FitWheel</div>
+    <div class="login-sub">依照以下步驟連線</div>
+  </div>
+
+  <!-- WiFi QR code -->
+  <div class="qr-card" id="qr-wifi" style="margin: 0 auto 8px;"></div>
+  <div class="qr-hint" style="margin-bottom: 20px;">📷 掃描 QR Code 連接 WiFi，連上後自動開啟訓練頁面</div>
+
+  <!-- Network credentials card -->
+  <div class="net-card">
+    <div class="net-name">🔒 JHT_VC_test</div>
+    <div class="net-row"><span>密碼</span><span>19930901</span></div>
+    <div class="net-row"><span>安全性</span><span>WPA2</span></div>
+    <div class="net-row"><span>頻段</span><span>2.4 GHz</span></div>
+  </div>
+
+  <!-- Step guide -->
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">掃描<strong>左邊 QR Code</strong> 連接 WiFi（或手動連接 JHT_VC_test）</div>
     </div>
-
-    <div class="dashboard-fixed bg-slate-900 border-t border-blue-500/30">
-        <div class="dashboard-grid items-center text-center">
-            <div class="flex flex-col">
-                <span class="text-xs text-slate-500">TIME</span>
-                <span id="v-time" class="text-xl font-mono text-blue-400">00:00</span>
-            </div>
-            <div class="flex flex-col">
-                <span class="text-xs text-slate-500">RESIST</span>
-                <span id="v-res" class="text-xl font-mono text-white">10</span>
-            </div>
-            <div class="flex flex-col">
-                <span class="text-xs text-slate-500">KCAL</span>
-                <span id="v-cal" class="text-xl font-mono text-orange-500">0</span>
-            </div>
-            <button onclick="requestFS()" class="flex items-center justify-center text-slate-400">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-            </button>
-        </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">連上 WiFi 後，掃描<strong>右邊 QR Code</strong> 開啟訓練頁面</div>
     </div>
+  </div>
 
-    <script>
-        const player = document.getElementById('player');
-        const overlay = document.getElementById('library-overlay');
+  <button class="btn-primary" onclick="goToLogin()">已在此頁面，直接下一步</button>
+  <div class="connecting" id="connecting-wifi">
+    <div class="spinner"></div>
+    <span>正在驗證連線…</span>
+  </div>
+</div>
 
-        // 模擬從雲端獲取的 API 數據
-        const mockCloudData = [
-            { title: "法蘭克福林間小徑", url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", kcal: 300 },
-            { title: "巴黎城市巡禮", url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", kcal: 450 }
-        ];
+<!-- ════════════════════════════════════════════
+     SCREEN 2 — Terms & User Login
+════════════════════════════════════════════ -->
+<div class="screen login-screen hidden" id="screen-login">
+  <div class="progress-dots">
+    <div class="pdot done"></div>
+    <div class="pdot active"></div>
+  </div>
 
-        function renderCloudPlaylist() {
-            const container = document.getElementById('cloud-playlist');
-            container.innerHTML = mockCloudData.map(v => `
-                <div onclick="playVideo('${v.url}')" class="bg-white/5 p-3 rounded-lg border border-white/10 hover:border-blue-500 transition cursor-pointer">
-                    <div class="text-sm font-medium">${v.title}</div>
-                    <div class="text-xs text-slate-500 mt-1">預估消耗: ${v.kcal} kcal</div>
-                </div>
-            `).join('');
-        }
+  <div class="login-header">
+    <span class="login-icon">🏋️</span>
+    <div class="login-title">開始訓練</div>
+    <div class="login-sub">填寫資料並同意條款後即可開始</div>
+  </div>
 
-        function playVideo(url) {
-            player.src = url;
-            player.play();
-            toggleLib();
-        }
+  <!-- User info form -->
+  <div class="login-form">
+    <div class="form-group">
+      <label class="form-label">姓名</label>
+      <input class="form-input" id="input-name" type="text" placeholder="請輸入您的姓名" oninput="validateLogin()" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">年齡</label>
+      <input class="form-input" id="input-age" type="number" placeholder="請輸入年齡" min="10" max="99" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">性別</label>
+      <select class="form-select" id="input-gender">
+        <option value="" disabled selected>請選擇</option>
+        <option value="male">男</option>
+        <option value="female">女</option>
+        <option value="other">其他</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">體重（公斤）</label>
+      <input class="form-input" id="input-weight" type="number" placeholder="選填，用於精準熱量計算" min="20" max="300" />
+    </div>
+  </div>
 
-        function toggleLib() {
-            overlay.classList.toggle('active');
-        }
+  <!-- Terms -->
+  <div class="terms-card">
+    <h3>使用條款與免責聲明</h3>
+    <div class="terms-text">
+      1. 本系統為飛輪健身輔助工具，所顯示之數據（熱量、功率等）僅供參考，不得作為醫療依據。<br><br>
+      2. 使用者應自行評估自身身體狀況，如有心血管疾病、高血壓或其他慢性疾病，請先諮詢醫師後再進行訓練。<br><br>
+      3. 訓練過程中若感到身體不適（如頭暈、胸悶、呼吸困難等），請立即停止運動並尋求協助。<br><br>
+      4. 本服務提供者對因使用本系統而造成之任何直接或間接損害不承擔責任。<br><br>
+      5. 使用者所提供之個人資料僅用於本次訓練，不會儲存或分享給第三方。<br><br>
+      6. 使用本系統即表示您已充分理解並同意以上所有條款。
+    </div>
+    <label class="checkbox-row" id="terms-label">
+      <input type="checkbox" id="terms-check" onchange="validateLogin()" />
+      <span>我已閱讀並同意使用條款</span>
+    </label>
+  </div>
 
-        function requestFS() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                document.exitFullscreen();
-            }
-        }
+  <button class="btn-primary" id="btn-start" disabled onclick="startWorkout()">同意並開始訓練</button>
+  <div class="connecting" id="connecting-login">
+    <div class="spinner"></div>
+    <span>正在準備訓練環境…</span>
+  </div>
+</div>
 
-        // 初始化
-        renderCloudPlaylist();
-        
-        // 模擬數據更新
-        let seconds = 0;
-        setInterval(() => {
-            if(!player.paused) {
-                seconds++;
-                document.getElementById('v-time').innerText = 
-                    new Date(seconds * 1000).toISOString().substr(14, 5);
-                document.getElementById('v-cal').innerText = Math.floor(seconds * 0.25);
-            }
-        }, 1000);
-    </script>
+<!-- ════════════════════════════════════════════
+     SCREEN 3 — Fitness / Flywheel
+════════════════════════════════════════════ -->
+<div class="screen hidden" id="screen-fitness">
+
+  <!-- Fullscreen & Settings buttons -->
+  <button id="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+  <button id="settings-btn" onclick="openSettings()">⚙</button>
+
+  <!-- Video thumbnail strip -->
+  <div id="vid-selector"><!-- built by JS --></div>
+
+  <!-- YouTube player -->
+  <div id="player-wrap">
+    <div id="yt-player"></div>
+
+    <!-- Workout mode label -->
+    <div id="mode-badge"></div>
+
+    <!-- Video controls overlay -->
+    <div id="ctrl-overlay">
+      <button class="ctrl-btn sm" onclick="seekRel(-10)" title="−10 s">⏮</button>
+      <button class="ctrl-btn lg" id="play-btn" onclick="togglePlay()">▶</button>
+      <button class="ctrl-btn sm" onclick="seekRel(10)" title="+10 s">⏭</button>
+      <input class="vol-slider" id="vol-slider" type="range" min="0" max="100" value="75"
+        oninput="setVolume(this.value)" />
+      <span style="font-size:16px; flex-shrink:0;">🔊</span>
+      <div class="time-display" id="time-display">0:00</div>
+    </div>
+  </div>
+
+  <!-- ── Flywheel data bar ── -->
+  <div id="data-bar">
+    <div class="metric m-time">
+      <div class="metric-val" id="m-time">00:00</div>
+      <div class="metric-lbl">Time</div>
+    </div>
+    <div class="m-div"></div>
+    <div class="metric m-resistance">
+      <div class="metric-val" id="m-res">8</div>
+      <div class="res-gauge" id="res-gauge"></div>
+      <div class="metric-lbl">Resistance</div>
+    </div>
+    <div class="m-div"></div>
+    <div class="metric m-cadence">
+      <div class="metric-val" id="m-rpm">85</div>
+      <div class="metric-unit">rpm</div>
+      <div class="metric-lbl">Cadence</div>
+    </div>
+    <div class="m-div"></div>
+    <div class="metric m-power">
+      <div class="metric-val" id="m-power">142</div>
+      <div class="metric-unit">W</div>
+      <div class="metric-lbl">Power</div>
+    </div>
+    <div class="m-div"></div>
+    <div class="metric m-calories">
+      <div class="metric-val" id="m-cal">0</div>
+      <div class="metric-unit">kcal</div>
+      <div class="metric-lbl">Calories</div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div id="settings-modal">
+  <div class="settings-box">
+    <div class="settings-title">⚙ 訓練設定</div>
+    <button class="settings-action-btn btn-pause"  onclick="workoutPause()">⏸ 暫停訓練</button>
+    <button class="settings-action-btn btn-resume" onclick="workoutResume()">▶ 繼續訓練</button>
+    <button class="settings-action-btn btn-stop"   onclick="workoutStop()">⏹ 停止訓練</button>
+    <button class="settings-action-btn btn-cancel" onclick="closeSettings()">取消</button>
+  </div>
+</div>
+
+<!-- Stats screen -->
+<div id="screen-stats">
+  <div class="stats-title">訓練完成</div>
+  <div class="stats-subtitle" id="stats-user">WORKOUT SUMMARY</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-val" id="stat-time">--:--</div>
+      <div class="stat-lbl">總時間</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-cal">--</div>
+      <div class="stat-unit">kcal</div>
+      <div class="stat-lbl">消耗熱量</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-avgpow">--</div>
+      <div class="stat-unit">W</div>
+      <div class="stat-lbl">平均功率</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-maxpow">--</div>
+      <div class="stat-unit">W</div>
+      <div class="stat-lbl">最高功率</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-avgrpm">--</div>
+      <div class="stat-unit">rpm</div>
+      <div class="stat-lbl">平均踏速</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="stat-maxres">--</div>
+      <div class="stat-lbl">最高阻力</div>
+    </div>
+  </div>
+  <button class="btn-new-workout" onclick="newWorkout()">重新開始</button>
+</div>
+
+<!-- Toast notification -->
+<div id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════
+   CONFIG — swap these YouTube video IDs freely
+════════════════════════════════════════════ */
+const VIDEO_LIBRARY = [
+  { id: 'wFk-A_IYLgM', title: 'HIIT Spin',     icon: '🔥' },
+  { id: '_rAc3DZEFSA', title: 'Lofi Ride',     icon: '🎵' },
+  { id: 't3wXC8TyvW8', title: 'Chill Beats',   icon: '🎧' },
+  { id: 'w8AdziT6RJI', title: 'Mountain Climb', icon: '⛰️' },
+  { id: '7ylIAZm16-0', title: 'Pump Up Mix',   icon: '💪' },
+];
+
+/* ════════════════════════════════════════════
+   QR Codes — WiFi + Page URL
+════════════════════════════════════════════ */
+const SSID     = 'JHT_VC_test';
+const PASSWORD = '19930901';
+
+(function buildQR() {
+  try {
+    new QRCode(document.getElementById('qr-wifi'), {
+      text: `WIFI:T:WPA;S:${SSID};P:${PASSWORD};;`,
+      width: 160, height: 160,
+      colorDark: '#000', colorLight: '#fff',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  } catch (e) {
+    document.getElementById('qr-wifi').style.display = 'none';
+  }
+})();
+
+/* ════════════════════════════════════════════
+   WIFI CONNECT FLOW
+════════════════════════════════════════════ */
+let currentUser = {};
+
+// Clear any stuck localStorage from previous version
+try { localStorage.removeItem('fw_screen'); localStorage.removeItem('fw_user'); } catch(e) {}
+
+function showScreen(name) {
+  document.getElementById('screen-wifi').classList.toggle('hidden', name !== 'wifi');
+  document.getElementById('screen-login').classList.toggle('hidden', name !== 'login');
+  document.getElementById('screen-fitness').classList.toggle('hidden', name !== 'fitness');
+  // Remember current screen (survives rotation reload, clears on tab close)
+  try { sessionStorage.setItem('fw_screen', name); } catch(e) {}
+}
+
+// Restore screen after rotation reload, or handle captive portal entry
+(function restoreScreen() {
+  let target = null;
+  try { target = sessionStorage.getItem('fw_screen'); } catch(e) {}
+
+  // Captive portal first visit
+  if (!target && new URLSearchParams(location.search).has('portal')) {
+    target = 'login';
+    history.replaceState(null, '', location.pathname);
+  }
+
+  if (target === 'login') {
+    showScreen('login');
+  } else if (target === 'fitness') {
+    showScreen('fitness');
+    // Restore user info
+    try {
+      const u = sessionStorage.getItem('fw_user');
+      if (u) currentUser = JSON.parse(u);
+    } catch(e) {}
+    initFitness();
+  }
+})();
+
+function goToLogin() {
+  const btn = event.target;
+  btn.style.display = 'none';
+  document.getElementById('connecting-wifi').style.display = 'flex';
+
+  setTimeout(() => {
+    showScreen('login');
+  }, 1500);
+}
+
+function validateLogin() {
+  const nameOk = document.getElementById('input-name').value.trim().length > 0;
+  const checked = document.getElementById('terms-check').checked;
+  document.getElementById('btn-start').disabled = !(nameOk && checked);
+}
+
+function startWorkout() {
+  currentUser = {
+    name:   document.getElementById('input-name').value.trim(),
+    age:    document.getElementById('input-age').value || '--',
+    gender: document.getElementById('input-gender').value || '--',
+    weight: document.getElementById('input-weight').value || '--',
+  };
+  try { sessionStorage.setItem('fw_user', JSON.stringify(currentUser)); } catch(e) {}
+
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('connecting-login').style.display = 'flex';
+
+  setTimeout(() => {
+    showScreen('fitness');
+    initFitness();
+    showToast(`歡迎 ${currentUser.name}！開始訓練`);
+  }, 2000);
+}
+
+/* ════════════════════════════════════════════
+   FITNESS SCREEN INIT
+════════════════════════════════════════════ */
+let player  = null;
+let playing = false;
+let volSync = setInterval(syncTime, 1000);
+let fitnessInited = false;
+
+function initFitness() {
+  if (fitnessInited) return;
+  fitnessInited = true;
+  buildThumbStrip();
+  buildResGauge();
+  loadYouTubeAPI();
+  startSimulation();
+}
+
+function buildThumbStrip() {
+  const strip = document.getElementById('vid-selector');
+  VIDEO_LIBRARY.forEach((v, i) => {
+    const el = document.createElement('div');
+    el.className = 'vid-thumb' + (i === 0 ? ' active' : '');
+    el.innerHTML = `<div class="vid-thumb-icon">${v.icon}</div>
+                    <div class="vid-thumb-title">${v.title}</div>`;
+    el.onclick = () => pickVideo(i);
+    strip.appendChild(el);
+  });
+}
+
+function buildResGauge() {
+  const g = document.getElementById('res-gauge');
+  for (let i = 0; i < 20; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    g.appendChild(d);
+  }
+}
+
+/* ════════════════════════════════════════════
+   YOUTUBE IFRAME API
+════════════════════════════════════════════ */
+function loadYouTubeAPI() {
+  const s = document.createElement('script');
+  s.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(s);
+}
+
+window.onYouTubeIframeAPIReady = function () {
+  showToast('YouTube API 載入中…');
+  player = new YT.Player('yt-player', {
+    videoId: VIDEO_LIBRARY[0].id,
+    playerVars: {
+      autoplay: 0, controls: 0, rel: 0,
+      modestbranding: 1, playsinline: 1, iv_load_policy: 3,
+    },
+    events: {
+      onReady(e) {
+        e.target.setVolume(75);
+        showToast('▶ 點擊播放鍵開始');
+      },
+      onStateChange(e) {
+        playing = (e.data === YT.PlayerState.PLAYING);
+        updatePlayBtn();
+      },
+      onError(e) {
+        const codes = {2:'影片ID錯誤',5:'HTML5錯誤',100:'影片不存在',101:'不允許嵌入',150:'不允許嵌入'};
+        showToast('❌ ' + (codes[e.data] || '錯誤代碼:' + e.data));
+      },
+    },
+  });
+};
+
+let currentVidIdx = 0;
+function pickVideo(idx) {
+  currentVidIdx = idx;
+  document.querySelectorAll('.vid-thumb').forEach((el, i) =>
+    el.classList.toggle('active', i === idx));
+  if (player) {
+    player.loadVideoById(VIDEO_LIBRARY[idx].id);
+    playing = true; updatePlayBtn();
+  }
+}
+
+function togglePlay() {
+  if (!player) return;
+  playing ? player.pauseVideo() : player.playVideo();
+}
+
+function seekRel(delta) {
+  if (!player) return;
+  const t = player.getCurrentTime();
+  player.seekTo(Math.max(0, t + delta), true);
+  showToast(delta > 0 ? `⏭ +${delta}s` : `⏮ ${delta}s`);
+}
+
+function setVolume(v) {
+  if (player) player.setVolume(parseInt(v));
+}
+
+function updatePlayBtn() {
+  document.getElementById('play-btn').textContent = playing ? '⏸' : '▶';
+}
+
+function syncTime() {
+  if (!player || typeof player.getCurrentTime !== 'function') return;
+  const t = Math.floor(player.getCurrentTime());
+  const m = Math.floor(t / 60), s = t % 60;
+  document.getElementById('time-display').textContent =
+    `${m}:${String(s).padStart(2,'0')}`;
+}
+
+/* ════════════════════════════════════════════
+   SIMULATION ENGINE
+════════════════════════════════════════════ */
+let simSec = 0;
+let simRes = 8, simResTarget = 8;
+let simRpm = 85, simRpmTarget = 85;
+let simCal = 0;
+let simPow = 142;
+let simPaused = false;
+let simPowSum = 0, simRpmSum = 0, simMaxPow = 0, simMaxRes = 0, simTickCount = 0;
+
+const WORKOUT_MODES = [
+  { res: 5,  rpm: 105, label: '⚡ Sprint!',       color: '#56d364' },
+  { res: 14, rpm: 72,  label: '⛰️ Heavy Climb',   color: '#f78166' },
+  { res: 8,  rpm: 90,  label: '🚴 Tempo',          color: '#4fc3f7' },
+  { res: 18, rpm: 60,  label: '💀 Max Resistance', color: '#ff6b6b' },
+  { res: 6,  rpm: 98,  label: '🔥 Fast Flat',      color: '#ffa657' },
+  { res: 11, rpm: 82,  label: '💪 Climb',          color: '#d2a8ff' },
+];
+
+function startSimulation() {
+  setInterval(tick, 1000);
+  setInterval(changeMode, 9000);
+}
+
+function tick() {
+  if (simPaused) return;
+  simSec++;
+
+  // Smooth resistance
+  if (simRes < simResTarget) simRes = Math.min(simRes + 1, simResTarget);
+  else if (simRes > simResTarget) simRes = Math.max(simRes - 1, simResTarget);
+
+  // Smooth cadence with small jitter
+  const rpmDiff = simRpmTarget - simRpm;
+  simRpm += Math.sign(rpmDiff) * Math.min(Math.abs(rpmDiff), 4);
+  simRpm = Math.round(simRpm + (Math.random() - .5) * 3);
+  simRpm = Math.max(55, Math.min(125, simRpm));
+
+  // Power model: roughly (resistance * cadence * 0.18)
+  simPow = Math.round(simRes * simRpm * 0.18 + (Math.random() - .5) * 8);
+
+  // Calories: ~3.6 kcal/Wh converted to per-second
+  simCal += simPow / 3600 * 3.6;
+
+  // Stats accumulation
+  simTickCount++;
+  simPowSum += simPow;
+  simRpmSum += simRpm;
+  if (simPow > simMaxPow) simMaxPow = simPow;
+  if (simRes > simMaxRes) simMaxRes = simRes;
+
+  renderMetrics();
+}
+
+function changeMode() {
+  const m = WORKOUT_MODES[Math.floor(Math.random() * WORKOUT_MODES.length)];
+  simResTarget = m.res;
+  simRpmTarget = m.rpm;
+  showModeBadge(m.label, m.color);
+}
+
+function renderMetrics() {
+  // Time
+  const m = String(Math.floor(simSec / 60)).padStart(2, '0');
+  const s = String(simSec % 60).padStart(2, '0');
+  document.getElementById('m-time').textContent = `${m}:${s}`;
+
+  // Resistance + gauge dots
+  document.getElementById('m-res').textContent = simRes;
+  document.querySelectorAll('.dot').forEach((d, i) =>
+    d.classList.toggle('on', i < simRes));
+
+  // Cadence, Power, Calories
+  document.getElementById('m-rpm').textContent   = simRpm;
+  document.getElementById('m-power').textContent = simPow;
+  document.getElementById('m-cal').textContent   = Math.round(simCal);
+}
+
+/* ════════════════════════════════════════════
+   UI HELPERS
+════════════════════════════════════════════ */
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+let badgeTimer = null;
+function showModeBadge(label, color) {
+  const b = document.getElementById('mode-badge');
+  b.textContent = label;
+  b.style.color = color;
+  b.classList.add('show');
+  clearTimeout(badgeTimer);
+  badgeTimer = setTimeout(() => b.classList.remove('show'), 3000);
+}
+
+/* ════════════════════════════════════════════
+   FULLSCREEN
+════════════════════════════════════════════ */
+function toggleFullscreen() {
+  const el = document.documentElement;
+  const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+  if (isFs) {
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  } else {
+    (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+  }
+}
+document.addEventListener('fullscreenchange', updateFsBtn);
+document.addEventListener('webkitfullscreenchange', updateFsBtn);
+function updateFsBtn() {
+  const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+  document.getElementById('fullscreen-btn').textContent = isFs ? '✕' : '⛶';
+}
+
+/* ════════════════════════════════════════════
+   SETTINGS & WORKOUT CONTROL
+════════════════════════════════════════════ */
+function openSettings() {
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('open');
+}
+
+function workoutPause() {
+  simPaused = true;
+  if (player) player.pauseVideo();
+  playing = false; updatePlayBtn();
+  closeSettings();
+  showToast('⏸ 訓練已暫停');
+}
+
+function workoutResume() {
+  simPaused = false;
+  if (player) player.playVideo();
+  playing = true; updatePlayBtn();
+  closeSettings();
+  showToast('▶ 訓練繼續');
+}
+
+function workoutStop() {
+  simPaused = true;
+  if (player) player.pauseVideo();
+  closeSettings();
+
+  // Fill stats
+  const mm = String(Math.floor(simSec / 60)).padStart(2, '0');
+  const ss = String(simSec % 60).padStart(2, '0');
+  document.getElementById('stat-time').textContent   = `${mm}:${ss}`;
+  document.getElementById('stat-cal').textContent    = Math.round(simCal);
+  document.getElementById('stat-avgpow').textContent = simTickCount ? Math.round(simPowSum / simTickCount) : 0;
+  document.getElementById('stat-maxpow').textContent = simMaxPow;
+  document.getElementById('stat-avgrpm').textContent = simTickCount ? Math.round(simRpmSum / simTickCount) : 0;
+  document.getElementById('stat-maxres').textContent = simMaxRes;
+  document.getElementById('stats-user').textContent =
+    currentUser.name ? `${currentUser.name} 的訓練紀錄` : 'WORKOUT SUMMARY';
+
+  document.getElementById('screen-stats').classList.add('open');
+}
+
+function newWorkout() {
+  // Reset simulation
+  simSec = 0; simCal = 0; simPow = 142;
+  simRes = 8; simResTarget = 8; simRpm = 85; simRpmTarget = 85;
+  simPaused = false; simPowSum = 0; simRpmSum = 0;
+  simMaxPow = 0; simMaxRes = 0; simTickCount = 0;
+  renderMetrics();
+  document.getElementById('screen-stats').classList.remove('open');
+
+  // Go back to login screen for next user
+  showScreen('login');
+  fitnessInited = false;
+  try { sessionStorage.removeItem('fw_user'); } catch(e) {}
+  // Reset login form
+  document.getElementById('input-name').value = '';
+  document.getElementById('input-age').value = '';
+  document.getElementById('input-gender').selectedIndex = 0;
+  document.getElementById('input-weight').value = '';
+  document.getElementById('terms-check').checked = false;
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('btn-start').style.display = '';
+  document.getElementById('connecting-login').style.display = 'none';
+  // Reset player
+  if (player) { player.stopVideo(); playing = false; updatePlayBtn(); }
+}
+
+/* Auto-hide controls after 4s of no touch */
+let ctrlTimer = null;
+const ctrlEl = document.getElementById('ctrl-overlay');
+document.getElementById('player-wrap').addEventListener('touchstart', () => {
+  ctrlEl.style.opacity = '1';
+  clearTimeout(ctrlTimer);
+  ctrlTimer = setTimeout(() => { ctrlEl.style.opacity = '0'; }, 4000);
+});
+// Default hide after 4s on load
+setTimeout(() => { ctrlEl.style.opacity = '0'; }, 4000);
+</script>
 </body>
 </html>
