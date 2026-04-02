@@ -6,8 +6,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>FitWheel</title>
-  <!-- QR Code library for Wi-Fi auto-connect QR -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -145,6 +143,64 @@
     }
     .btn-primary:active { transform: scale(.96); }
     .btn-primary:disabled { opacity: .4; pointer-events: none; }
+
+    /* Login choice buttons */
+    .login-buttons {
+      display: flex; gap: 16px;
+      justify-content: center;
+      margin: 10px 0 20px;
+      width: 100%; max-width: 380px;
+    }
+    .login-choice {
+      flex: 1;
+      background: #1a0505;
+      border: 2px solid #8b1a1a;
+      border-radius: 16px;
+      padding: 24px 16px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color .2s, transform .15s, box-shadow .2s;
+    }
+    .login-choice:active { transform: scale(.96); }
+    .login-choice.guest:hover, .login-choice.guest:active {
+      border-color: #ff6b6b;
+      box-shadow: 0 0 20px rgba(255,107,107,.3);
+    }
+    .login-choice.member:hover, .login-choice.member:active {
+      border-color: #ffd700;
+      box-shadow: 0 0 20px rgba(255,215,0,.3);
+    }
+    .choice-icon { font-size: 36px; margin-bottom: 10px; }
+    .choice-label { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .choice-desc { font-size: 12px; color: #a06060; }
+
+    /* Back button */
+    .btn-back {
+      background: none; border: 1px solid #4a1010;
+      border-radius: 50px;
+      color: #a06060; padding: 10px 24px;
+      font-size: 14px; cursor: pointer;
+      margin: 0 auto; display: block;
+      transition: color .2s, border-color .2s;
+    }
+    .btn-back:active { color: #ff6b6b; border-color: #ff6b6b; }
+
+    /* User badge on fitness screen */
+    #user-badge {
+      display: none;
+      position: absolute;
+      top: 10px; left: 12px;
+      z-index: 50;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.2);
+      backdrop-filter: blur(8px);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px; font-weight: 600;
+      color: #ffd700;
+      white-space: nowrap;
+    }
+    #user-badge.show { display: block; }
 
     /* Connecting spinner */
     .connecting {
@@ -582,112 +638,60 @@
 <body>
 
 <!-- ════════════════════════════════════════════
-     SCREEN 1 — Wi-Fi Connection
+     SCREEN 1 — Start / Landing
 ════════════════════════════════════════════ -->
 <div class="screen login-screen" id="screen-wifi">
-  <div class="progress-dots">
-    <div class="pdot active"></div>
-    <div class="pdot"></div>
-  </div>
-
   <div class="login-header">
-    <span class="login-icon">📡</span>
-    <div class="login-title">連接 FitWheel</div>
-    <div class="login-sub">依照以下步驟連線</div>
+    <span class="login-icon">🚴</span>
+    <div class="login-title">FitWheel</div>
+    <div class="login-sub">選擇登入方式開始訓練</div>
   </div>
 
-  <!-- WiFi QR code -->
-  <div class="qr-card" id="qr-wifi" style="margin: 0 auto 8px;"></div>
-  <div class="qr-hint" style="margin-bottom: 20px;">📷 掃描 QR Code 連接 WiFi，連上後自動開啟訓練頁面</div>
-
-  <!-- Network credentials card -->
-  <div class="net-card">
-    <div class="net-name">🔒 JHT_VC_test</div>
-    <div class="net-row"><span>密碼</span><span>19930901</span></div>
-    <div class="net-row"><span>安全性</span><span>WPA2</span></div>
-    <div class="net-row"><span>頻段</span><span>2.4 GHz</span></div>
+  <div class="login-buttons">
+    <button class="login-choice guest" onclick="guestLogin()">
+      <div class="choice-icon">👤</div>
+      <div class="choice-label">訪客登入</div>
+      <div class="choice-desc">免註冊，立即開始</div>
+    </button>
+    <button class="login-choice member" onclick="showMemberLogin()">
+      <div class="choice-icon">⭐</div>
+      <div class="choice-label">會員登入</div>
+      <div class="choice-desc">記錄您的訓練數據</div>
+    </button>
   </div>
 
-  <!-- Step guide -->
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-text">掃描<strong>左邊 QR Code</strong> 連接 WiFi（或手動連接 JHT_VC_test）</div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-text">連上 WiFi 後，掃描<strong>右邊 QR Code</strong> 開啟訓練頁面</div>
-    </div>
-  </div>
-
-  <button class="btn-primary" onclick="goToLogin()">已在此頁面，直接下一步</button>
   <div class="connecting" id="connecting-wifi">
     <div class="spinner"></div>
-    <span>正在驗證連線…</span>
+    <span>正在進入…</span>
   </div>
 </div>
 
 <!-- ════════════════════════════════════════════
-     SCREEN 2 — Terms & User Login
+     SCREEN 2 — Member Login
 ════════════════════════════════════════════ -->
 <div class="screen login-screen hidden" id="screen-login">
-  <div class="progress-dots">
-    <div class="pdot done"></div>
-    <div class="pdot active"></div>
-  </div>
-
   <div class="login-header">
-    <span class="login-icon">🏋️</span>
-    <div class="login-title">開始訓練</div>
-    <div class="login-sub">填寫資料並同意條款後即可開始</div>
+    <span class="login-icon">⭐</span>
+    <div class="login-title">會員登入</div>
+    <div class="login-sub">輸入帳號密碼開始訓練</div>
   </div>
 
-  <!-- User info form -->
   <div class="login-form">
     <div class="form-group">
-      <label class="form-label">姓名</label>
-      <input class="form-input" id="input-name" type="text" placeholder="請輸入您的姓名" oninput="validateLogin()" />
+      <label class="form-label">使用者名稱</label>
+      <input class="form-input" id="input-username" type="text" placeholder="請輸入使用者名稱" oninput="validateMemberLogin()" />
     </div>
     <div class="form-group">
-      <label class="form-label">年齡</label>
-      <input class="form-input" id="input-age" type="number" placeholder="請輸入年齡" min="10" max="99" />
-    </div>
-    <div class="form-group">
-      <label class="form-label">性別</label>
-      <select class="form-select" id="input-gender">
-        <option value="" disabled selected>請選擇</option>
-        <option value="male">男</option>
-        <option value="female">女</option>
-        <option value="other">其他</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label class="form-label">體重（公斤）</label>
-      <input class="form-input" id="input-weight" type="number" placeholder="選填，用於精準熱量計算" min="20" max="300" />
+      <label class="form-label">密碼</label>
+      <input class="form-input" id="input-password" type="password" placeholder="請輸入密碼" oninput="validateMemberLogin()" />
     </div>
   </div>
 
-  <!-- Terms -->
-  <div class="terms-card">
-    <h3>使用條款與免責聲明</h3>
-    <div class="terms-text">
-      1. 本系統為飛輪健身輔助工具，所顯示之數據（熱量、功率等）僅供參考，不得作為醫療依據。<br><br>
-      2. 使用者應自行評估自身身體狀況，如有心血管疾病、高血壓或其他慢性疾病，請先諮詢醫師後再進行訓練。<br><br>
-      3. 訓練過程中若感到身體不適（如頭暈、胸悶、呼吸困難等），請立即停止運動並尋求協助。<br><br>
-      4. 本服務提供者對因使用本系統而造成之任何直接或間接損害不承擔責任。<br><br>
-      5. 使用者所提供之個人資料僅用於本次訓練，不會儲存或分享給第三方。<br><br>
-      6. 使用本系統即表示您已充分理解並同意以上所有條款。
-    </div>
-    <label class="checkbox-row" id="terms-label">
-      <input type="checkbox" id="terms-check" onchange="validateLogin()" />
-      <span>我已閱讀並同意使用條款</span>
-    </label>
-  </div>
-
-  <button class="btn-primary" id="btn-start" disabled onclick="startWorkout()">同意並開始訓練</button>
+  <button class="btn-primary" id="btn-member-start" disabled onclick="memberLogin()">登入並開始訓練</button>
+  <button class="btn-back" onclick="showScreen('wifi')">← 返回</button>
   <div class="connecting" id="connecting-login">
     <div class="spinner"></div>
-    <span>正在準備訓練環境…</span>
+    <span>正在登入…</span>
   </div>
 </div>
 
@@ -696,7 +700,8 @@
 ════════════════════════════════════════════ -->
 <div class="screen hidden" id="screen-fitness">
 
-  <!-- Fullscreen & Settings buttons -->
+  <!-- User badge (left) & buttons (right) -->
+  <div id="user-badge"></div>
   <button id="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
   <button id="settings-btn" onclick="openSettings()">⚙</button>
 
@@ -819,26 +824,7 @@ const VIDEO_LIBRARY = [
 ];
 
 /* ════════════════════════════════════════════
-   QR Codes — WiFi + Page URL
-════════════════════════════════════════════ */
-const SSID     = 'JHT_VC_test';
-const PASSWORD = '19930901';
-
-(function buildQR() {
-  try {
-    new QRCode(document.getElementById('qr-wifi'), {
-      text: `WIFI:T:WPA;S:${SSID};P:${PASSWORD};;`,
-      width: 160, height: 160,
-      colorDark: '#000', colorLight: '#fff',
-      correctLevel: QRCode.CorrectLevel.M,
-    });
-  } catch (e) {
-    document.getElementById('qr-wifi').style.display = 'none';
-  }
-})();
-
-/* ════════════════════════════════════════════
-   WIFI CONNECT FLOW
+   LOGIN FLOW
 ════════════════════════════════════════════ */
 let currentUser = {};
 
@@ -854,13 +840,23 @@ function showScreen(name) {
 }
 
 // Restore screen after rotation reload, or handle captive portal entry
-(function restoreScreen() {
+document.addEventListener('DOMContentLoaded', function restoreScreen() {
   let target = null;
   try { target = sessionStorage.getItem('fw_screen'); } catch(e) {}
 
-  // Captive portal first visit
-  if (!target && new URLSearchParams(location.search).has('portal')) {
+  const params = new URLSearchParams(location.search);
+  const mode = params.get('mode');
+
+  // From captive portal: guest → straight to fitness, member → login screen
+  if (!target && mode === 'guest') {
+    currentUser = { name: '訪客', type: 'guest' };
+    target = 'fitness';
+  } else if (!target && mode === 'member') {
     target = 'login';
+  }
+
+  // Clean up URL params
+  if (location.search) {
     history.replaceState(null, '', location.pathname);
   }
 
@@ -868,48 +864,61 @@ function showScreen(name) {
     showScreen('login');
   } else if (target === 'fitness') {
     showScreen('fitness');
-    // Restore user info
     try {
       const u = sessionStorage.getItem('fw_user');
       if (u) currentUser = JSON.parse(u);
     } catch(e) {}
+    updateUserBadge();
     initFitness();
   }
-})();
+});
 
-function goToLogin() {
-  const btn = event.target;
-  btn.style.display = 'none';
+function guestLogin() {
+  currentUser = { name: '訪客', type: 'guest' };
+  document.querySelector('.login-buttons').style.display = 'none';
   document.getElementById('connecting-wifi').style.display = 'flex';
 
   setTimeout(() => {
-    showScreen('login');
+    showScreen('fitness');
+    updateUserBadge();
+    initFitness();
   }, 1500);
 }
 
-function validateLogin() {
-  const nameOk = document.getElementById('input-name').value.trim().length > 0;
-  const checked = document.getElementById('terms-check').checked;
-  document.getElementById('btn-start').disabled = !(nameOk && checked);
+function showMemberLogin() {
+  showScreen('login');
 }
 
-function startWorkout() {
-  currentUser = {
-    name:   document.getElementById('input-name').value.trim(),
-    age:    document.getElementById('input-age').value || '--',
-    gender: document.getElementById('input-gender').value || '--',
-    weight: document.getElementById('input-weight').value || '--',
-  };
+function validateMemberLogin() {
+  const nameOk = document.getElementById('input-username').value.trim().length > 0;
+  const passOk = document.getElementById('input-password').value.length > 0;
+  document.getElementById('btn-member-start').disabled = !(nameOk && passOk);
+}
+
+function memberLogin() {
+  const name = document.getElementById('input-username').value.trim();
+  currentUser = { name: name, type: 'member' };
   try { sessionStorage.setItem('fw_user', JSON.stringify(currentUser)); } catch(e) {}
 
-  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-member-start').style.display = 'none';
   document.getElementById('connecting-login').style.display = 'flex';
 
   setTimeout(() => {
     showScreen('fitness');
+    updateUserBadge();
     initFitness();
     showToast(`歡迎 ${currentUser.name}！開始訓練`);
   }, 2000);
+}
+
+function updateUserBadge() {
+  const badge = document.getElementById('user-badge');
+  if (currentUser.type === 'member' && currentUser.name) {
+    badge.textContent = '⭐ ' + currentUser.name;
+    badge.classList.add('show');
+  } else {
+    badge.classList.remove('show');
+  }
 }
 
 /* ════════════════════════════════════════════
@@ -953,14 +962,28 @@ function buildResGauge() {
 /* ════════════════════════════════════════════
    YOUTUBE IFRAME API
 ════════════════════════════════════════════ */
+let ytAPILoaded = false;
+
 function loadYouTubeAPI() {
-  const s = document.createElement('script');
-  s.src = 'https://www.youtube.com/iframe_api';
-  document.head.appendChild(s);
+  if (!ytAPILoaded) {
+    const s = document.createElement('script');
+    s.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(s);
+    ytAPILoaded = true;
+  } else {
+    // API already loaded, create player directly
+    createPlayer();
+  }
 }
 
-window.onYouTubeIframeAPIReady = function () {
-  showToast('YouTube API 載入中…');
+function createPlayer() {
+  // Ensure the yt-player div exists
+  const wrap = document.getElementById('player-wrap');
+  if (!document.getElementById('yt-player')) {
+    const div = document.createElement('div');
+    div.id = 'yt-player';
+    wrap.insertBefore(div, wrap.firstChild);
+  }
   player = new YT.Player('yt-player', {
     videoId: VIDEO_LIBRARY[0].id,
     playerVars: {
@@ -982,6 +1005,10 @@ window.onYouTubeIframeAPIReady = function () {
       },
     },
   });
+}
+
+window.onYouTubeIframeAPIReady = function () {
+  createPlayer();
 };
 
 let currentVidIdx = 0;
@@ -1043,9 +1070,14 @@ const WORKOUT_MODES = [
   { res: 11, rpm: 82,  label: '💪 Climb',          color: '#d2a8ff' },
 ];
 
+let simTickInterval = null;
+let simModeInterval = null;
+
 function startSimulation() {
-  setInterval(tick, 1000);
-  setInterval(changeMode, 9000);
+  if (simTickInterval) clearInterval(simTickInterval);
+  if (simModeInterval) clearInterval(simModeInterval);
+  simTickInterval = setInterval(tick, 1000);
+  simModeInterval = setInterval(changeMode, 9000);
 }
 
 function tick() {
@@ -1190,7 +1222,11 @@ function workoutStop() {
 }
 
 function newWorkout() {
-  // Reset simulation
+  // Stop simulation timers
+  if (simTickInterval) { clearInterval(simTickInterval); simTickInterval = null; }
+  if (simModeInterval) { clearInterval(simModeInterval); simModeInterval = null; }
+
+  // Reset simulation data
   simSec = 0; simCal = 0; simPow = 142;
   simRes = 8; simResTarget = 8; simRpm = 85; simRpmTarget = 85;
   simPaused = false; simPowSum = 0; simRpmSum = 0;
@@ -1198,21 +1234,38 @@ function newWorkout() {
   renderMetrics();
   document.getElementById('screen-stats').classList.remove('open');
 
-  // Go back to login screen for next user
-  showScreen('login');
+  // Destroy player and recreate the div for next init
+  if (player) {
+    try { player.destroy(); } catch(e) {}
+    player = null;
+  }
+  playing = false;
+  // Recreate yt-player div (destroy removes it)
+  var wrap = document.getElementById('player-wrap');
+  if (!document.getElementById('yt-player')) {
+    var div = document.createElement('div');
+    div.id = 'yt-player';
+    wrap.insertBefore(div, wrap.firstChild);
+  }
+
+  // Back to landing page
+  showScreen('wifi');
   fitnessInited = false;
-  try { sessionStorage.removeItem('fw_user'); } catch(e) {}
+  document.getElementById('user-badge').classList.remove('show');
+  document.getElementById('vid-selector').innerHTML = '';
+  document.getElementById('res-gauge').innerHTML = '';
+  // Reset control overlay visibility
+  document.getElementById('ctrl-overlay').style.opacity = '1';
   // Reset login form
-  document.getElementById('input-name').value = '';
-  document.getElementById('input-age').value = '';
-  document.getElementById('input-gender').selectedIndex = 0;
-  document.getElementById('input-weight').value = '';
-  document.getElementById('terms-check').checked = false;
-  document.getElementById('btn-start').disabled = true;
-  document.getElementById('btn-start').style.display = '';
+  document.getElementById('input-username').value = '';
+  document.getElementById('input-password').value = '';
+  document.getElementById('btn-member-start').disabled = true;
+  document.getElementById('btn-member-start').style.display = '';
   document.getElementById('connecting-login').style.display = 'none';
-  // Reset player
-  if (player) { player.stopVideo(); playing = false; updatePlayBtn(); }
+  // Reset landing buttons
+  var lb = document.querySelector('.login-buttons');
+  if (lb) lb.style.display = '';
+  document.getElementById('connecting-wifi').style.display = 'none';
 }
 
 /* Auto-hide controls after 4s of no touch */
