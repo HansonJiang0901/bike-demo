@@ -46,33 +46,33 @@ PORTAL_PAGE = f"""<!DOCTYPE html>
   *{{margin:0;padding:0;box-sizing:border-box}}
   body{{
     min-height:100vh;
-    background:radial-gradient(ellipse at top,#2a0000 0%,#0a0000 70%);
+    background:radial-gradient(ellipse at top,#2a2510 0%,#0f0d08 70%);
     color:#fff;
     font-family:-apple-system,sans-serif;
     display:flex;flex-direction:column;
     align-items:center;justify-content:center;
     padding:24px;text-align:center;
   }}
-  .icon{{font-size:64px;margin-bottom:16px}}
-  h1{{font-size:24px;color:#ff4444;margin-bottom:6px}}
-  p{{font-size:14px;color:#a06060;margin-bottom:28px}}
+  .logo{{width:120px;height:auto;margin-bottom:16px;border-radius:12px}}
+  h1{{font-size:20px;color:#d4a017;margin-bottom:6px}}
+  p{{font-size:14px;color:#a09060;margin-bottom:28px}}
   .buttons{{display:flex;gap:16px;width:100%;max-width:340px}}
   .choice{{
     flex:1;
-    background:#1a0505;border:2px solid #8b1a1a;border-radius:16px;
+    background:#1a1708;border:2px solid #6b5a1a;border-radius:16px;
     padding:24px 12px;text-align:center;text-decoration:none;
     color:#fff;transition:border-color .2s,box-shadow .2s;
   }}
   .choice:active{{transform:scale(.96)}}
-  .choice.guest:active{{border-color:#ff6b6b;box-shadow:0 0 20px rgba(255,107,107,.3)}}
+  .choice.guest:active{{border-color:#e6c34d;box-shadow:0 0 20px rgba(230,195,77,.3)}}
   .choice.member:active{{border-color:#ffd700;box-shadow:0 0 20px rgba(255,215,0,.3)}}
   .ch-icon{{font-size:36px;margin-bottom:10px}}
   .ch-label{{font-size:17px;font-weight:700;margin-bottom:4px}}
-  .ch-desc{{font-size:12px;color:#a06060}}
+  .ch-desc{{font-size:12px;color:#a09060}}
 </style>
 </head><body>
-  <div class="icon">🚴</div>
-  <h1>FitWheel</h1>
+  <img class="logo" src="{APP_URL}/image/logo/logo.jpg" alt="Logo">
+  <h1>Johnson Virtual Console Demo</h1>
   <p>選擇登入方式開始訓練</p>
   <div class="buttons">
     <a class="choice guest" href="{APP_URL}?mode=guest" target="_blank">

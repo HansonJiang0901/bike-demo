@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <title>FitWheel</title>
+  <title>Johnson Virtual Console Demo</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -46,7 +46,7 @@
     ════════════════════════════════════════════ */
     .login-screen {
       padding: 20px;
-      background: radial-gradient(ellipse at top, #2a0000 0%, #0a0000 70%);
+      background: radial-gradient(ellipse at top, #2a2510 0%, #0f0d08 70%);
       overflow-y: auto;
       justify-content: flex-start;
       padding-top: 40px;
@@ -54,8 +54,9 @@
 
     .login-header { text-align: center; margin-bottom: 24px; }
     .login-icon { font-size: 52px; margin-bottom: 8px; display: block; }
-    .login-title { font-size: 26px; font-weight: 700; letter-spacing: -.3px; color: #ff6b6b; }
-    .login-sub { font-size: 14px; color: #a06060; margin-top: 4px; }
+    .login-logo { width: 120px; height: auto; border-radius: 12px; margin-bottom: 12px; }
+    .login-title { font-size: 26px; font-weight: 700; letter-spacing: -.3px; color: #e6c34d; }
+    .login-sub { font-size: 14px; color: #a09060; margin-top: 4px; }
 
     /* Progress indicator */
     .progress-dots {
@@ -64,11 +65,11 @@
     }
     .pdot {
       width: 10px; height: 10px; border-radius: 50%;
-      background: #4a1010;
+      background: #4a3a10;
       transition: background .3s, box-shadow .3s;
     }
-    .pdot.active { background: #ff4444; box-shadow: 0 0 8px #ff4444; }
-    .pdot.done   { background: #8b1a1a; }
+    .pdot.active { background: #d4a017; box-shadow: 0 0 8px #d4a017; }
+    .pdot.done   { background: #6b5a1a; }
 
     /* QR code card */
     .qr-card {
@@ -77,37 +78,37 @@
       padding: 14px;
       width: fit-content;
       margin: 0 auto 6px;
-      box-shadow: 0 0 40px rgba(255,68,68,.2);
+      box-shadow: 0 0 40px rgba(212,160,23,.2);
     }
     .qr-hint {
       text-align: center;
       font-size: 11px;
-      color: #a06060;
+      color: #a09060;
     }
 
     /* Network info card */
     .net-card {
       width: 100%; max-width: 340px;
-      background: #1a0505;
-      border: 1px solid #8b1a1a;
+      background: #1a1708;
+      border: 1px solid #6b5a1a;
       border-radius: 16px;
       padding: 16px 20px;
       margin: 0 auto 20px;
     }
     .net-name {
-      font-size: 17px; font-weight: 600; color: #ff6b6b;
+      font-size: 17px; font-weight: 600; color: #e6c34d;
       display: flex; align-items: center; gap: 8px;
       margin-bottom: 12px;
     }
     .net-row {
       display: flex; justify-content: space-between; align-items: center;
       padding: 8px 0;
-      border-bottom: 1px solid #3a1010;
+      border-bottom: 1px solid #3a3010;
       font-size: 14px;
     }
     .net-row:last-child { border: none; }
-    .net-row span:first-child { color: #a06060; }
-    .net-row span:last-child { font-weight: 500; font-family: monospace; letter-spacing: .5px; color: #ffaaaa; }
+    .net-row span:first-child { color: #a09060; }
+    .net-row span:last-child { font-weight: 500; font-family: monospace; letter-spacing: .5px; color: #f5e6a3; }
 
     /* Steps */
     .steps {
@@ -119,25 +120,25 @@
       margin-bottom: 12px;
     }
     .step-num {
-      background: #c0392b; color: #fff;
+      background: #d4a017; color: #fff;
       min-width: 26px; height: 26px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       font-weight: 700; font-size: 13px;
     }
     .step-text { color: #ccc; font-size: 14px; line-height: 1.5; padding-top: 3px; }
-    .step-text strong { color: #ff6b6b; }
+    .step-text strong { color: #e6c34d; }
 
     /* Primary action button */
     .btn-primary {
       display: block;
-      background: linear-gradient(135deg, #c0392b, #8b1a1a);
+      background: linear-gradient(135deg, #d4a017, #6b5a1a);
       color: #fff;
       border: none; border-radius: 50px;
       padding: 15px 40px;
       font-size: 17px; font-weight: 700;
       cursor: pointer; margin: 0 auto 16px;
-      box-shadow: 0 4px 24px rgba(192,57,43,.5);
+      box-shadow: 0 4px 24px rgba(212,160,23,.5);
       transition: transform .15s, box-shadow .15s;
       letter-spacing: .5px;
     }
@@ -153,8 +154,8 @@
     }
     .login-choice {
       flex: 1;
-      background: #1a0505;
-      border: 2px solid #8b1a1a;
+      background: #1a1708;
+      border: 2px solid #6b5a1a;
       border-radius: 16px;
       padding: 24px 16px;
       cursor: pointer;
@@ -163,8 +164,8 @@
     }
     .login-choice:active { transform: scale(.96); }
     .login-choice.guest:hover, .login-choice.guest:active {
-      border-color: #ff6b6b;
-      box-shadow: 0 0 20px rgba(255,107,107,.3);
+      border-color: #e6c34d;
+      box-shadow: 0 0 20px rgba(230,195,77,.3);
     }
     .login-choice.member:hover, .login-choice.member:active {
       border-color: #ffd700;
@@ -172,18 +173,18 @@
     }
     .choice-icon { font-size: 36px; margin-bottom: 10px; }
     .choice-label { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-    .choice-desc { font-size: 12px; color: #a06060; }
+    .choice-desc { font-size: 12px; color: #a09060; }
 
     /* Back button */
     .btn-back {
-      background: none; border: 1px solid #4a1010;
+      background: none; border: 1px solid #4a3a10;
       border-radius: 50px;
-      color: #a06060; padding: 10px 24px;
+      color: #a09060; padding: 10px 24px;
       font-size: 14px; cursor: pointer;
       margin: 0 auto; display: block;
       transition: color .2s, border-color .2s;
     }
-    .btn-back:active { color: #ff6b6b; border-color: #ff6b6b; }
+    .btn-back:active { color: #e6c34d; border-color: #e6c34d; }
 
     /* User badge on fitness screen */
     #user-badge {
@@ -205,13 +206,13 @@
     /* Connecting spinner */
     .connecting {
       display: none; align-items: center; justify-content: center;
-      gap: 10px; color: #ff6b6b; font-size: 15px;
+      gap: 10px; color: #e6c34d; font-size: 15px;
       margin-bottom: 16px;
     }
     .spinner {
       width: 22px; height: 22px;
-      border: 3px solid rgba(255,68,68,.25);
-      border-top-color: #ff4444;
+      border: 3px solid rgba(212,160,23,.25);
+      border-top-color: #d4a017;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -222,14 +223,14 @@
     ════════════════════════════════════════════ */
     .terms-card {
       width: 100%; max-width: 360px;
-      background: #1a0505;
-      border: 1px solid #8b1a1a;
+      background: #1a1708;
+      border: 1px solid #6b5a1a;
       border-radius: 16px;
       padding: 20px;
       margin: 0 auto 20px;
     }
     .terms-card h3 {
-      font-size: 15px; color: #ff6b6b;
+      font-size: 15px; color: #e6c34d;
       margin-bottom: 12px;
     }
     .terms-text {
@@ -241,14 +242,14 @@
       margin-bottom: 16px;
     }
     .terms-text::-webkit-scrollbar { width: 4px; }
-    .terms-text::-webkit-scrollbar-thumb { background: #8b1a1a; border-radius: 2px; }
+    .terms-text::-webkit-scrollbar-thumb { background: #6b5a1a; border-radius: 2px; }
     .checkbox-row {
       display: flex; align-items: center; gap: 10px;
       cursor: pointer; font-size: 14px; color: #ccc;
     }
     .checkbox-row input[type="checkbox"] {
       width: 20px; height: 20px;
-      accent-color: #c0392b;
+      accent-color: #d4a017;
       cursor: pointer;
     }
 
@@ -260,30 +261,30 @@
     }
     .form-group { display: flex; flex-direction: column; gap: 4px; }
     .form-label {
-      font-size: 12px; color: #a06060;
+      font-size: 12px; color: #a09060;
       text-transform: uppercase; letter-spacing: 1px;
     }
     .form-input {
-      background: #1a0505;
-      border: 1px solid #8b1a1a;
+      background: #1a1708;
+      border: 1px solid #6b5a1a;
       border-radius: 10px;
       padding: 12px 14px;
       color: #fff; font-size: 15px;
       outline: none;
       transition: border-color .2s;
     }
-    .form-input:focus { border-color: #ff4444; }
-    .form-input::placeholder { color: #5a3030; }
+    .form-input:focus { border-color: #d4a017; }
+    .form-input::placeholder { color: #5a4a20; }
     .form-select {
-      background: #1a0505;
-      border: 1px solid #8b1a1a;
+      background: #1a1708;
+      border: 1px solid #6b5a1a;
       border-radius: 10px;
       padding: 12px 14px;
       color: #fff; font-size: 15px;
       outline: none;
       -webkit-appearance: none;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ff6b6b' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23e6c34d' stroke-width='2' fill='none'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 14px center;
     }
@@ -405,9 +406,9 @@
     #data-bar {
       flex-shrink: 0;
       width: 100%; align-self: stretch;
-      background: linear-gradient(180deg, #1a0000 0%, #2a0a0a 100%);
-      border-top: 2px solid #c0392b;
-      box-shadow: 0 -4px 20px rgba(192,57,43,.35);
+      background: linear-gradient(180deg, #1a1708 0%, #201c0a 100%);
+      border-top: 2px solid #d4a017;
+      box-shadow: 0 -4px 20px rgba(212,160,23,.35);
       display: flex; align-items: center;
       justify-content: space-around;
       padding: 12px 0;
@@ -425,31 +426,31 @@
       font-variant-numeric: tabular-nums;
       text-shadow: 0 0 12px currentColor;
     }
-    .metric-unit { font-size: 11px; color: #e88; }
+    .metric-unit { font-size: 11px; color: #c8a84d; }
     .metric-lbl {
       font-size: 9px; text-transform: uppercase;
-      letter-spacing: 1.5px; color: #a06060;
+      letter-spacing: 1.5px; color: #a09060;
     }
 
     /* color per metric — all red tones */
-    .m-time .metric-val       { color: #ff6b6b; }
-    .m-resistance .metric-val { color: #ff2222; }
-    .m-cadence .metric-val    { color: #ff9999; }
-    .m-power .metric-val      { color: #ffcccc; }
-    .m-calories .metric-val   { color: #ff4444; }
+    .m-time .metric-val       { color: #e6c34d; }
+    .m-resistance .metric-val { color: #d4a017; }
+    .m-cadence .metric-val    { color: #f5e6a3; }
+    .m-power .metric-val      { color: #f9f0c8; }
+    .m-calories .metric-val   { color: #d4a017; }
 
     /* Resistance mini-gauge */
     .res-gauge { display: flex; gap: 2px; margin-top: 2px; }
     .dot {
       width: 5px; height: 5px; border-radius: 50%;
-      background: #4a1010;
+      background: #4a3a10;
       transition: background .3s;
     }
-    .dot.on { background: #ff2222; box-shadow: 0 0 4px #ff2222; }
+    .dot.on { background: #d4a017; box-shadow: 0 0 4px #d4a017; }
 
     .m-div {
       width: 1px; height: 42px;
-      background: linear-gradient(180deg, transparent, #8b1a1a, transparent);
+      background: linear-gradient(180deg, transparent, #6b5a1a, transparent);
       flex-shrink: 0;
     }
 
@@ -503,17 +504,17 @@
     }
     #settings-modal.open { display: flex; }
     .settings-box {
-      background: #1a0505;
-      border: 1px solid #8b1a1a;
+      background: #1a1708;
+      border: 1px solid #6b5a1a;
       border-radius: 20px;
       padding: 28px 24px;
       width: min(320px, 88vw);
-      box-shadow: 0 8px 40px rgba(192,57,43,.4);
+      box-shadow: 0 8px 40px rgba(212,160,23,.4);
       display: flex; flex-direction: column; gap: 12px;
     }
     .settings-title {
       font-size: 16px; font-weight: 700;
-      color: #ff6b6b; text-align: center;
+      color: #e6c34d; text-align: center;
       margin-bottom: 4px; letter-spacing: 1px;
     }
     .settings-action-btn {
@@ -526,7 +527,7 @@
     .settings-action-btn:active { transform: scale(.97); opacity: .85; }
     .btn-pause  { background: #2a2a00; color: #ffd700; border: 1px solid #665500; }
     .btn-resume { background: #002a10; color: #56d364; border: 1px solid #1a6632; }
-    .btn-stop   { background: #2a0000; color: #ff4444; border: 1px solid #8b1a1a; }
+    .btn-stop   { background: #2a2510; color: #d4a017; border: 1px solid #6b5a1a; }
     .btn-cancel { background: transparent; color: #888; border: 1px solid #333; }
 
     /* ════════════════════════════════════════════
@@ -535,7 +536,7 @@
     #screen-stats {
       display: none;
       position: fixed; inset: 0; z-index: 150;
-      background: radial-gradient(ellipse at top, #2a0000 0%, #0a0000 70%);
+      background: radial-gradient(ellipse at top, #2a2510 0%, #0f0d08 70%);
       flex-direction: column;
       align-items: center; justify-content: center;
       padding: 24px;
@@ -543,11 +544,11 @@
     #screen-stats.open { display: flex; }
     .stats-title {
       font-size: 22px; font-weight: 800;
-      color: #ff4444; margin-bottom: 6px;
+      color: #d4a017; margin-bottom: 6px;
       letter-spacing: 2px;
     }
     .stats-subtitle {
-      font-size: 12px; color: #a06060;
+      font-size: 12px; color: #a09060;
       margin-bottom: 28px; letter-spacing: 1px;
     }
     .stats-grid {
@@ -558,31 +559,146 @@
       margin-bottom: 28px;
     }
     .stat-card {
-      background: #1a0505;
-      border: 1px solid #8b1a1a;
+      background: #1a1708;
+      border: 1px solid #6b5a1a;
       border-radius: 14px;
       padding: 16px 12px;
       text-align: center;
     }
     .stat-val {
       font-size: 32px; font-weight: 800;
-      color: #ff4444;
-      text-shadow: 0 0 16px rgba(255,68,68,.5);
+      color: #d4a017;
+      text-shadow: 0 0 16px rgba(212,160,23,.5);
       line-height: 1;
       font-variant-numeric: tabular-nums;
     }
-    .stat-unit { font-size: 11px; color: #e88; margin: 2px 0; }
-    .stat-lbl  { font-size: 10px; color: #a06060; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-unit { font-size: 11px; color: #c8a84d; margin: 2px 0; }
+    .stat-lbl  { font-size: 10px; color: #a09060; text-transform: uppercase; letter-spacing: 1px; }
     .btn-new-workout {
-      background: linear-gradient(135deg, #c0392b, #8b1a1a);
+      background: linear-gradient(135deg, #d4a017, #6b5a1a);
       color: #fff; border: none; border-radius: 14px;
       padding: 16px 40px;
       font-size: 16px; font-weight: 700;
       cursor: pointer; letter-spacing: 1px;
-      box-shadow: 0 4px 20px rgba(192,57,43,.5);
+      box-shadow: 0 4px 20px rgba(212,160,23,.5);
       transition: transform .15s;
     }
     .btn-new-workout:active { transform: scale(.96); }
+
+    /* ════════════════════════════════════════════
+       GO BUTTON
+    ════════════════════════════════════════════ */
+    #go-btn {
+      position: absolute;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 75px);
+      left: 12px;
+      z-index: 60;
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      border: 3px solid #d4a017;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(8px);
+      cursor: pointer;
+      padding: 24px;
+      box-shadow: 0 0 20px rgba(212,160,23,.4);
+      transition: transform .15s, box-shadow .2s, opacity .3s;
+    }
+    #go-btn img { width: 100%; height: 100%; object-fit: contain; }
+    #go-btn:active { transform: scale(.9); }
+    #go-btn.hidden { opacity: 0; pointer-events: none; }
+
+    /* ════════════════════════════════════════════
+       HOME PANEL (inside fitness screen)
+    ════════════════════════════════════════════ */
+    #home-panel {
+      display: none;
+      flex: 1; min-height: 0;
+      width: 100%;
+      background: radial-gradient(ellipse at top, #1a1708 0%, #0f0d08 70%);
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px;
+      overflow-y: auto;
+    }
+    #home-panel.open { display: flex; }
+    .home-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      width: 100%; max-width: 400px;
+    }
+    .home-card {
+      background: #1a1708;
+      border: 2px solid #6b5a1a;
+      border-radius: 14px;
+      padding: 20px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s, transform .15s;
+    }
+    .home-card:active { transform: scale(.95); }
+    .home-card.active { border-color: #d4a017; box-shadow: 0 0 16px rgba(212,160,23,.3); }
+    .home-card-icon { font-size: 32px; margin-bottom: 8px; }
+    .home-card-title {
+      font-size: 12px; color: #ccc; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    /* Home tab button in vid-selector */
+    .vid-thumb.home-tab {
+      background: #201c0a;
+      border-color: #d4a017;
+    }
+    .vid-thumb.home-tab .vid-thumb-icon { font-size: 16px; }
+    .vid-thumb.home-tab .vid-thumb-title { color: #e6c34d; }
+
+    /* ════════════════════════════════════════════
+       COUNTDOWN OVERLAY
+    ════════════════════════════════════════════ */
+    #countdown-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.85);
+      align-items: center; justify-content: center;
+    }
+    #countdown-overlay.show { display: flex; }
+    #countdown-overlay .cd-num {
+      font-size: 140px; font-weight: 900;
+      color: #d4a017;
+      text-shadow: 0 0 40px rgba(212,160,23,.6);
+      animation: cdPop .6s ease-out;
+    }
+    @keyframes cdPop {
+      0% { transform: scale(2); opacity: 0; }
+      60% { transform: scale(.9); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+
+    /* ════════════════════════════════════════════
+       WELCOME OVERLAY
+    ════════════════════════════════════════════ */
+    #welcome-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,.7);
+      backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+      flex-direction: column;
+    }
+    #welcome-overlay.show { display: flex; }
+    #welcome-overlay .welcome-text {
+      font-size: 28px; font-weight: 800;
+      color: #ffd700;
+      text-shadow: 0 0 20px rgba(255,215,0,.5);
+      animation: welcomePulse 1s ease-in-out infinite alternate;
+    }
+    #welcome-overlay .welcome-sub {
+      font-size: 14px; color: #a08040;
+      margin-top: 8px;
+    }
+    @keyframes welcomePulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
 
     /* ════════════════════════════════════════════
        TOAST
@@ -609,12 +725,14 @@
        ORIENTATION — LANDSCAPE tweaks
     ════════════════════════════════════════════ */
     @media (orientation: landscape) {
-      .login-screen { padding-top: 16px; }
-      #screen-wifi { flex-direction: row; flex-wrap: wrap; gap: 0 24px; align-content: flex-start; }
-      .login-header { width: 100%; margin-bottom: 12px; }
-      .qr-card { margin: 0 auto 4px; }
-      .net-card { max-width: 280px; margin: 0 0 12px; }
-      .steps { max-width: 260px; margin: 0 0 12px; }
+      .login-screen { padding-top: 12px; }
+      .login-header { margin-bottom: 10px; }
+      .login-logo { width: 60px; margin-bottom: 6px; }
+      .login-title { font-size: 18px; }
+      .login-buttons { margin: 6px 0 12px; gap: 12px; }
+      .login-choice { padding: 14px 10px; }
+      .choice-icon { font-size: 28px; }
+      .choice-label { font-size: 14px; }
 
       #vid-selector { padding: 6px 8px; }
       .vid-thumb { min-width: 78px; padding: 6px 10px; }
@@ -625,8 +743,7 @@
       .metric-lbl { font-size: 8px; }
       .m-div { height: 30px; }
 
-      .ctrl-btn.sm { width: 38px; height: 38px; font-size: 15px; }
-      .ctrl-btn.lg { width: 46px; height: 46px; font-size: 18px; }
+      #go-btn { width: 120px; height: 120px; padding: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 55px); }
     }
 
     /* Very small screen (iPhone SE) */
@@ -642,8 +759,8 @@
 ════════════════════════════════════════════ -->
 <div class="screen login-screen" id="screen-wifi">
   <div class="login-header">
-    <span class="login-icon">🚴</span>
-    <div class="login-title">FitWheel</div>
+    <img class="login-logo" src="image/logo/logo.jpg" alt="Logo">
+    <div class="login-title">Johnson Virtual Console Demo</div>
     <div class="login-sub">選擇登入方式開始訓練</div>
   </div>
 
@@ -708,6 +825,11 @@
   <!-- Video thumbnail strip -->
   <div id="vid-selector"><!-- built by JS --></div>
 
+  <!-- Home panel (same flex slot as player) -->
+  <div id="home-panel">
+    <div class="home-grid" id="home-grid"><!-- built by JS --></div>
+  </div>
+
   <!-- YouTube player -->
   <div id="player-wrap">
     <div id="yt-player"></div>
@@ -715,16 +837,6 @@
     <!-- Workout mode label -->
     <div id="mode-badge"></div>
 
-    <!-- Video controls overlay -->
-    <div id="ctrl-overlay">
-      <button class="ctrl-btn sm" onclick="seekRel(-10)" title="−10 s">⏮</button>
-      <button class="ctrl-btn lg" id="play-btn" onclick="togglePlay()">▶</button>
-      <button class="ctrl-btn sm" onclick="seekRel(10)" title="+10 s">⏭</button>
-      <input class="vol-slider" id="vol-slider" type="range" min="0" max="100" value="75"
-        oninput="setVolume(this.value)" />
-      <span style="font-size:16px; flex-shrink:0;">🔊</span>
-      <div class="time-display" id="time-display">0:00</div>
-    </div>
   </div>
 
   <!-- ── Flywheel data bar ── -->
@@ -758,6 +870,17 @@
       <div class="metric-lbl">Calories</div>
     </div>
   </div>
+
+  <!-- Countdown overlay -->
+  <div id="countdown-overlay"></div>
+
+  <!-- Start button (bottom-left) -->
+  <button id="go-btn" onclick="startGo()">
+    <img src="image/icon/go_icon.png" alt="GO">
+  </button>
+
+  <!-- Welcome overlay for members -->
+  <div id="welcome-overlay"></div>
 </div>
 
 <!-- Settings modal -->
@@ -816,11 +939,12 @@
    CONFIG — swap these YouTube video IDs freely
 ════════════════════════════════════════════ */
 const VIDEO_LIBRARY = [
-  { id: 'wFk-A_IYLgM', title: 'HIIT Spin',     icon: '🔥' },
-  { id: '_rAc3DZEFSA', title: 'Lofi Ride',     icon: '🎵' },
-  { id: 't3wXC8TyvW8', title: 'Chill Beats',   icon: '🎧' },
-  { id: 'w8AdziT6RJI', title: 'Mountain Climb', icon: '⛰️' },
-  { id: '7ylIAZm16-0', title: 'Pump Up Mix',   icon: '💪' },
+  { id: 'wFk-A_IYLgM', title: 'Barre',     icon: '🩰' },
+  { id: '_rAc3DZEFSA', title: 'Yoga',      icon: '🧘' },
+  { id: 't3wXC8TyvW8', title: 'Muscle',    icon: '💪' },
+  { id: 'w8AdziT6RJI', title: 'Recover',   icon: '🌿' },
+  { id: '7ylIAZm16-0', title: 'Flywheel',  icon: '🚴' },
+  { id: '1lheLGuLM2w', title: 'Pilates',   icon: '🤸' },
 ];
 
 /* ════════════════════════════════════════════
@@ -847,7 +971,7 @@ document.addEventListener('DOMContentLoaded', function restoreScreen() {
   const params = new URLSearchParams(location.search);
   const mode = params.get('mode');
 
-  // From captive portal: guest → straight to fitness, member → login screen
+  // From captive portal: guest → fitness, member → login screen
   if (!target && mode === 'guest') {
     currentUser = { name: '訪客', type: 'guest' };
     target = 'fitness';
@@ -907,7 +1031,7 @@ function memberLogin() {
     showScreen('fitness');
     updateUserBadge();
     initFitness();
-    showToast(`歡迎 ${currentUser.name}！開始訓練`);
+    showWelcome(currentUser.name);
   }, 2000);
 }
 
@@ -929,25 +1053,99 @@ let playing = false;
 let volSync = setInterval(syncTime, 1000);
 let fitnessInited = false;
 
+let simStarted = false;
+
 function initFitness() {
   if (fitnessInited) return;
   fitnessInited = true;
+  simStarted = false;
   buildThumbStrip();
   buildResGauge();
   loadYouTubeAPI();
-  startSimulation();
+  // Don't start simulation — wait for GO button
+  document.getElementById('go-btn').classList.remove('hidden');
+}
+
+function startGo() {
+  if (simStarted) return;
+  simStarted = true;
+  document.getElementById('go-btn').classList.add('hidden');
+
+  const cd = document.getElementById('countdown-overlay');
+  cd.classList.add('show');
+  let count = 3;
+
+  function showNum() {
+    cd.innerHTML = '<div class="cd-num">' + count + '</div>';
+    count--;
+    if (count > 0) {
+      setTimeout(showNum, 1000);
+    } else if (count === 0) {
+      setTimeout(() => {
+        cd.innerHTML = '<div class="cd-num">GO!</div>';
+        setTimeout(() => {
+          cd.classList.remove('show');
+          startSimulation();
+        }, 800);
+      }, 1000);
+    }
+  }
+  showNum();
+}
+
+function showWelcome(name) {
+  const el = document.getElementById('welcome-overlay');
+  el.innerHTML = '<div class="welcome-text">歡迎 ' + name + '</div><div class="welcome-sub">準備開始訓練</div>';
+  el.classList.add('show');
+  setTimeout(() => { el.classList.remove('show'); }, 3000);
 }
 
 function buildThumbStrip() {
   const strip = document.getElementById('vid-selector');
+
+  // Home tab (first button)
+  const homeEl = document.createElement('div');
+  homeEl.className = 'vid-thumb home-tab active';
+  homeEl.innerHTML = '<div class="vid-thumb-icon">🏠</div><div class="vid-thumb-title">Home</div>';
+  homeEl.onclick = () => showHomePanel();
+  strip.appendChild(homeEl);
+
+  // Video tabs
   VIDEO_LIBRARY.forEach((v, i) => {
     const el = document.createElement('div');
-    el.className = 'vid-thumb' + (i === 0 ? ' active' : '');
+    el.className = 'vid-thumb';
     el.innerHTML = `<div class="vid-thumb-icon">${v.icon}</div>
                     <div class="vid-thumb-title">${v.title}</div>`;
     el.onclick = () => pickVideo(i);
     strip.appendChild(el);
   });
+
+  // Build home grid (video cards)
+  buildHomeGrid();
+
+  // Show home panel by default, hide player
+  document.getElementById('home-panel').classList.add('open');
+  document.getElementById('player-wrap').style.display = 'none';
+}
+
+function buildHomeGrid() {
+  const grid = document.getElementById('home-grid');
+  grid.innerHTML = '';
+  VIDEO_LIBRARY.forEach((v, i) => {
+    const card = document.createElement('div');
+    card.className = 'home-card';
+    card.innerHTML = `<div class="home-card-icon">${v.icon}</div>
+                      <div class="home-card-title">${v.title}</div>`;
+    card.onclick = () => pickVideo(i);
+    grid.appendChild(card);
+  });
+}
+
+function showHomePanel() {
+  document.getElementById('home-panel').classList.add('open');
+  document.getElementById('player-wrap').style.display = 'none';
+  document.querySelectorAll('.vid-thumb').forEach(el => el.classList.remove('active'));
+  document.querySelector('.vid-thumb.home-tab').classList.add('active');
 }
 
 function buildResGauge() {
@@ -993,7 +1191,6 @@ function createPlayer() {
     events: {
       onReady(e) {
         e.target.setVolume(75);
-        showToast('▶ 點擊播放鍵開始');
       },
       onStateChange(e) {
         playing = (e.data === YT.PlayerState.PLAYING);
@@ -1014,8 +1211,12 @@ window.onYouTubeIframeAPIReady = function () {
 let currentVidIdx = 0;
 function pickVideo(idx) {
   currentVidIdx = idx;
+  // Hide home panel, show player
+  document.getElementById('home-panel').classList.remove('open');
+  document.getElementById('player-wrap').style.display = '';
+  // Highlight selected tab (+1 because home tab is index 0)
   document.querySelectorAll('.vid-thumb').forEach((el, i) =>
-    el.classList.toggle('active', i === idx));
+    el.classList.toggle('active', i === idx + 1));
   if (player) {
     player.loadVideoById(VIDEO_LIBRARY[idx].id);
     playing = true; updatePlayBtn();
@@ -1039,15 +1240,14 @@ function setVolume(v) {
 }
 
 function updatePlayBtn() {
-  document.getElementById('play-btn').textContent = playing ? '⏸' : '▶';
+  // Controls removed — no-op
 }
 
 function syncTime() {
   if (!player || typeof player.getCurrentTime !== 'function') return;
   const t = Math.floor(player.getCurrentTime());
   const m = Math.floor(t / 60), s = t % 60;
-  document.getElementById('time-display').textContent =
-    `${m}:${String(s).padStart(2,'0')}`;
+  // time-display removed
 }
 
 /* ════════════════════════════════════════════
@@ -1065,7 +1265,7 @@ const WORKOUT_MODES = [
   { res: 5,  rpm: 105, label: '⚡ Sprint!',       color: '#56d364' },
   { res: 14, rpm: 72,  label: '⛰️ Heavy Climb',   color: '#f78166' },
   { res: 8,  rpm: 90,  label: '🚴 Tempo',          color: '#4fc3f7' },
-  { res: 18, rpm: 60,  label: '💀 Max Resistance', color: '#ff6b6b' },
+  { res: 18, rpm: 60,  label: '💀 Max Resistance', color: '#e6c34d' },
   { res: 6,  rpm: 98,  label: '🔥 Fast Flat',      color: '#ffa657' },
   { res: 11, rpm: 82,  label: '💪 Climb',          color: '#d2a8ff' },
 ];
@@ -1225,6 +1425,7 @@ function newWorkout() {
   // Stop simulation timers
   if (simTickInterval) { clearInterval(simTickInterval); simTickInterval = null; }
   if (simModeInterval) { clearInterval(simModeInterval); simModeInterval = null; }
+  simStarted = false;
 
   // Reset simulation data
   simSec = 0; simCal = 0; simPow = 142;
@@ -1254,8 +1455,10 @@ function newWorkout() {
   document.getElementById('user-badge').classList.remove('show');
   document.getElementById('vid-selector').innerHTML = '';
   document.getElementById('res-gauge').innerHTML = '';
-  // Reset control overlay visibility
-  document.getElementById('ctrl-overlay').style.opacity = '1';
+  document.getElementById('home-grid').innerHTML = '';
+  document.getElementById('home-panel').classList.remove('open');
+  // Reset go button
+  document.getElementById('go-btn').classList.remove('hidden');
   // Reset login form
   document.getElementById('input-username').value = '';
   document.getElementById('input-password').value = '';
@@ -1263,21 +1466,10 @@ function newWorkout() {
   document.getElementById('btn-member-start').style.display = '';
   document.getElementById('connecting-login').style.display = 'none';
   // Reset landing buttons
-  var lb = document.querySelector('.login-buttons');
-  if (lb) lb.style.display = '';
+  document.querySelector('.login-buttons').style.display = 'flex';
   document.getElementById('connecting-wifi').style.display = 'none';
 }
 
-/* Auto-hide controls after 4s of no touch */
-let ctrlTimer = null;
-const ctrlEl = document.getElementById('ctrl-overlay');
-document.getElementById('player-wrap').addEventListener('touchstart', () => {
-  ctrlEl.style.opacity = '1';
-  clearTimeout(ctrlTimer);
-  ctrlTimer = setTimeout(() => { ctrlEl.style.opacity = '0'; }, 4000);
-});
-// Default hide after 4s on load
-setTimeout(() => { ctrlEl.style.opacity = '0'; }, 4000);
 </script>
 </body>
 </html>
